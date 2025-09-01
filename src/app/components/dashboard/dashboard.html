@@ -1,1 +1,120 @@
-<p>dashboard works!</p>
+<div class="dashboard-container">
+  <header class="dashboard-header">
+    <h1>Chat System Dashboard</h1>
+    <div class="user-info">
+      <span *ngIf="currentUser">Welcome, {{currentUser.username}}!</span>
+      <span *ngIf="currentUser" class="user-role">({{currentUser.roles[0]}})</span>
+      <button (click)="logout()" class="logout-btn">Logout</button>
+    </div>
+  </header>
+
+  <main class="dashboard-content">
+    
+    <!-- Super Admin View -->
+    <div *ngIf="isSuperAdmin" class="admin-section">
+      <h2>Super Admin Dashboard</h2>
+      
+      <div class="data-section">
+        <h3>All Users ({{users.length}})</h3>
+        <div class="users-list">
+          <div *ngFor="let user of users" class="user-item">
+            <div class="user-details">
+              <strong>{{user.username}}</strong>
+              <span class="user-email">{{user.email}}</span>
+              <span class="user-roles">Roles: {{user.roles.join(', ')}}</span>
+              <span class="user-groups">Groups: {{user.groups.length}}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="data-section">
+        <h3>All Groups ({{groups.length}})</h3>
+        <div class="groups-list">
+          <div *ngFor="let group of groups" class="group-item">
+            <div class="group-details">
+              <strong>{{group.name}}</strong>
+              <p>{{group.description}}</p>
+              <span class="group-info">Admin: {{getUsernameById(group.adminId)}}</span>
+              <span class="group-info">Members: {{group.members.length}}</span>
+              <span class="group-info">Channels: {{getChannelsForGroup(group.id).length}}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Group Admin View -->
+    <div *ngIf="isGroupAdmin && !isSuperAdmin" class="admin-section">
+      <h2>Group Admin Dashboard</h2>
+      
+      <div class="data-section">
+        <h3>My Groups</h3>
+        <p>Groups you can manage:</p>
+        <div class="groups-list">
+          <div *ngFor="let group of userGroups" class="group-item">
+            <div class="group-details">
+              <strong>{{group.name}}</strong>
+              <p>{{group.description}}</p>
+              <span class="group-info">Members: {{group.members.length}}</span>
+              <div class="channels-preview">
+                <strong>Channels:</strong>
+                <span *ngFor="let channel of getChannelsForGroup(group.id); let last = last">
+                  {{channel.name}}<span *ngIf="!last">, </span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div *ngIf="userGroups.length === 0" class="empty-message">
+          <p>You haven't created any groups yet.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Regular User View -->
+    <div *ngIf="isRegularUser" class="user-section">
+      <h2>User Dashboard</h2>
+      
+      <div class="data-section">
+        <h3>My Groups ({{userGroups.length}})</h3>
+        <div *ngIf="userGroups.length > 0" class="groups-list">
+          <div *ngFor="let group of userGroups" class="group-item">
+            <div class="group-details">
+              <strong>{{group.name}}</strong>
+              <p>{{group.description}}</p>
+              <span class="group-info">Admin: {{getUsernameById(group.adminId)}}</span>
+              <div class="channels-preview">
+                <strong>Available Channels:</strong>
+                <span *ngFor="let channel of getChannelsForGroup(group.id); let last = last">
+                  {{channel.name}}<span *ngIf="!last">, </span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div *ngIf="userGroups.length === 0" class="empty-message">
+          <p>You're not a member of any groups yet.</p>
+        </div>
+      </div>
+
+      <div class="data-section">
+        <h3>Available Groups to Join</h3>
+        <div class="groups-list">
+          <div *ngFor="let group of groups" class="group-item">
+            <div class="group-details">
+              <strong>{{group.name}}</strong>
+              <p>{{group.description}}</p>
+              <span class="group-info">Admin: {{getUsernameById(group.adminId)}}</span>
+              <span class="group-info">Members: {{group.members.length}}</span>
+              <span class="group-info">Channels: {{getChannelsForGroup(group.id).length}}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
