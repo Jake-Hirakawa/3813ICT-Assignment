@@ -1,0 +1,41 @@
+<div class="login-container">
+  <h2>Chat System Login</h2>
+  <form (ngSubmit)="onLogin()" #loginForm="ngForm">
+    <div class="form-group">
+      <label for="username">Username:</label>
+      <input 
+        type="text" 
+        id="username"
+        [(ngModel)]="username" 
+        name="username"
+        placeholder="Enter username" 
+        required
+        class="form-control">
+    </div>
+    
+    <div class="form-group">
+      <label for="password">Password:</label>
+      <input 
+        type="password" 
+        id="password"
+        [(ngModel)]="password" 
+        name="password"
+        placeholder="Enter password" 
+        required
+        class="form-control">
+    </div>
+    
+    <button type="submit" [disabled]="!loginForm.form.valid" class="login-btn">
+      Login
+    </button>
+    
+    <p *ngIf="errorMessage" class="error-message">{{errorMessage}}</p>
+  </form>
+  
+  <div class="test-accounts">
+    <h4>Test Accounts:</h4>
+    <p><strong>Super Admin:</strong> super / 123</p>
+    <p><strong>Group Admin:</strong> groupadmin1 / admin123</p>
+    <p><strong>User:</strong> user1 / user123</p>
+  </div>
+</div>
