@@ -1,4 +1,4 @@
-.login-container {
+.signup-container {
   max-width: 400px;
   margin: 50px auto;
   padding: 30px;
@@ -8,7 +8,7 @@
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-.login-container h2 {
+.signup-container h2 {
   text-align: center;
   margin-bottom: 30px;
   color: #333;
@@ -40,28 +40,7 @@
   box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }
 
-.login-btn {
-  width: 100%;
-  padding: 12px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  font-size: 16px;
-  cursor: pointer;
-  margin-bottom: 15px;
-}
-
-.login-btn:hover:not(:disabled) {
-  background-color: #0056b3;
-}
-
-.login-btn:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
-}
-
-.register-link-btn {
+.signup-btn {
   width: 100%;
   padding: 12px;
   background-color: #28a745;
@@ -70,33 +49,44 @@
   border-radius: 4px;
   font-size: 16px;
   cursor: pointer;
+  margin-bottom: 10px;
+}
+
+.signup-btn:hover:not(:disabled) {
+  background-color: #218838;
+}
+
+.signup-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.back-btn {
+  width: 100%;
+  padding: 12px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
   margin-bottom: 15px;
 }
 
-.register-link-btn:hover {
-  background-color: #218838;
+.back-btn:hover {
+  background-color: #5a6268;
 }
 
 .error-message {
   color: #dc3545;
   text-align: center;
   font-weight: bold;
+  margin-top: 10px;
 }
 
-.test-accounts {
-  margin-top: 30px;
-  padding: 20px;
-  background-color: #e9ecef;
-  border-radius: 4px;
-}
-
-.test-accounts h4 {
-  margin-bottom: 10px;
-  color: #333;
-}
-
-.test-accounts p {
-  margin: 5px 0;
-  font-size: 14px;
-  color: #666;
+.success-message {
+  color: #28a745;
+  text-align: center;
+  font-weight: bold;
+  margin-top: 10px;
 }

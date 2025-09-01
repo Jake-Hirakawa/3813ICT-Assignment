@@ -44,6 +44,21 @@
   background-color: #c0392b;
 }
 
+.reset-btn {
+  background-color: #f39c12;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  margin-left: 0.5rem;
+}
+
+.reset-btn:hover {
+  background-color: #e67e22;
+}
+
 .dashboard-content {
   padding: 2rem;
   max-width: 1000px;
@@ -159,6 +174,80 @@
   padding: 2rem;
   color: #777;
   font-style: italic;
+}
+
+/* Section Headers */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+/* Group Actions & Buttons */
+.group-actions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.join-btn {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.join-btn:hover {
+  background-color: #218838;
+}
+
+.leave-btn {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.leave-btn:hover {
+  background-color: #c82333;
+}
+
+.delete-self-btn {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  font-size: 0.9rem;
+}
+
+.delete-self-btn:hover {
+  background-color: #c82333;
+}
+
+.member-badge {
+  background-color: #28a745;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+/* Already Member Styling */
+.group-item.already-member {
+  border-color: #28a745;
+  background-color: #f8fff9;
 }
 
 /* Responsive Design */

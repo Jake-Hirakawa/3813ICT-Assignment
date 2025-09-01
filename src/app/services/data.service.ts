@@ -59,6 +59,15 @@ export class DataService {
           channels: [1, 2],
           members: [1, 2, 3],
           createdBy: 2
+        },
+        {
+          id: 2,
+          name: 'Project Team',
+          description: 'Group for project discussions',
+          adminId: 1,
+          channels: [],
+          members: [1],
+          createdBy: 1
         }
       ];
 
@@ -247,4 +256,24 @@ export class DataService {
     }
     return false;
   }
+
+  removeUserFromGroup(userId: number, groupId: number): boolean {
+  const user = this.getUserById(userId);
+  const group = this.getGroupById(groupId);
+  
+  if (user && group && group.members.includes(userId)) {
+    group.members = group.members.filter(id => id !== userId);
+    user.groups = user.groups.filter(id => id !== groupId);
+
+    this.updateUser(userId, user);
+
+    const groups = this.getGroups();
+    const groupIndex = groups.findIndex(g => g.id === groupId);
+    groups[groupIndex] = group;
+    this.saveToStorage(this.STORAGE_KEYS.groups, groups);
+    
+    return true;
+  }
+  return false;   
+}
 }

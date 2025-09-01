@@ -71,4 +71,45 @@ export class DashboardComponent implements OnInit {
     this.authService.logout();
     this.router.navigate(['/login']);
   }
+
+    // User functionality - Join Groups
+  requestJoinGroup(groupId: number) {
+    if (this.currentUser) {
+      const success = this.dataService.addUserToGroup(this.currentUser.id, groupId);
+      if (success) {
+        alert('Successfully joined the group!');
+        this.loadData(); // Refresh data
+      } else {
+        alert('Unable to join group. You may already be a member.');
+      }
+    }
+  }
+
+  // User functionality - Leave Groups  
+  leaveGroup(groupId: number) {
+    if (confirm('Are you sure you want to leave this group?') && this.currentUser) {
+      const success = this.dataService.removeUserFromGroup(this.currentUser.id, groupId);
+      if (success) {
+        alert('You have left the group.');
+        this.loadData(); // Refresh data
+      }
+    }
+  }
+
+  // User functionality - Delete Self
+  deleteSelf() {
+    if (confirm('Are you sure you want to delete your account? This cannot be undone.') && this.currentUser) {
+      const success = this.dataService.deleteUser(this.currentUser.id);
+      if (success) {
+        alert('Your account has been deleted.');
+        this.authService.logout();
+        this.router.navigate(['/login']);
+      }
+    }
+  }
+
+  // Helper method to check if user is member of a group
+  isUserMemberOfGroup(groupId: number): boolean {
+    return this.userGroups.some(group => group.id === groupId);
+  }
 }

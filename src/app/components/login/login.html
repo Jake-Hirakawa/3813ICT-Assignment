@@ -28,6 +28,10 @@
     <button type="submit" [disabled]="!loginForm.form.valid" class="login-btn">
       Login
     </button>
+
+    <button type="button" (click)="goToSignUp()" class="register-link-btn">
+      Create New Account
+    </button>
     
     <p *ngIf="errorMessage" class="error-message">{{errorMessage}}</p>
   </form>

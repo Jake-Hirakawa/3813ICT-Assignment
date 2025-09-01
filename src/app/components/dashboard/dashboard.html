@@ -78,7 +78,11 @@
       <h2>User Dashboard</h2>
       
       <div class="data-section">
-        <h3>My Groups ({{userGroups.length}})</h3>
+        <div class="section-header">
+          <h3>My Groups ({{userGroups.length}})</h3>
+          <button (click)="deleteSelf()" class="delete-self-btn">Delete My Account</button>
+        </div>
+        
         <div *ngIf="userGroups.length > 0" class="groups-list">
           <div *ngFor="let group of userGroups" class="group-item">
             <div class="group-details">
@@ -92,24 +96,38 @@
                 </span>
               </div>
             </div>
+            <div class="group-actions">
+              <button (click)="leaveGroup(group.id)" class="leave-btn">Leave Group</button>
+            </div>
           </div>
         </div>
         
         <div *ngIf="userGroups.length === 0" class="empty-message">
-          <p>You're not a member of any groups yet.</p>
+          <p>You're not a member of any groups yet. Join some groups below!</p>
         </div>
       </div>
 
       <div class="data-section">
         <h3>Available Groups to Join</h3>
         <div class="groups-list">
-          <div *ngFor="let group of groups" class="group-item">
+          <div *ngFor="let group of groups" class="group-item" 
+               [class.already-member]="isUserMemberOfGroup(group.id)">
             <div class="group-details">
               <strong>{{group.name}}</strong>
               <p>{{group.description}}</p>
               <span class="group-info">Admin: {{getUsernameById(group.adminId)}}</span>
               <span class="group-info">Members: {{group.members.length}}</span>
               <span class="group-info">Channels: {{getChannelsForGroup(group.id).length}}</span>
+            </div>
+            <div class="group-actions">
+              <button *ngIf="!isUserMemberOfGroup(group.id)"
+                      (click)="requestJoinGroup(group.id)" 
+                      class="join-btn">
+                Join Group
+              </button>
+              <span *ngIf="isUserMemberOfGroup(group.id)" class="member-badge">
+                ✓ Member
+              </span>
             </div>
           </div>
         </div>
