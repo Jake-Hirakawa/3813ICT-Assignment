@@ -45,7 +45,15 @@ function loadData() {
       }));
       joinRequests = Array.isArray(joinRequests) ? joinRequests : [];
     } else {
-      // no data file yet — write defaults
+      // Create default super admin user if no data file exists
+      users = [{
+        id: 'u1',
+        username: 'super',
+        email: 'super@admin.com',
+        password: '123',
+        roles: ['Super Admin'],
+        groups: []
+      }];
       saveData();
     }
   } catch (err) {
@@ -94,7 +102,11 @@ app.post('/api/auth/login', (req, res) => {
 });
 
 // --- USERS ---
-app.get('/api/users', (req, res) => res.json({ users }));
+app.get('/api/users', (req, res) => {
+  // Return users without passwords
+  const safeUsers = users.map(({ password, ...user }) => user);
+  res.json({ users: safeUsers });
+});
 
 app.post('/api/users', (req, res) => {
   const { username, email, password } = req.body || {};
@@ -111,7 +123,34 @@ app.post('/api/users', (req, res) => {
   };
   users.push(user);
   saveData();
-  return res.status(201).json({ user });
+  const { password: _omit, ...userWithoutPassword } = user;
+  return res.status(201).json({ user: userWithoutPassword });
+});
+
+// Delete user - Super Admin only
+app.delete('/api/users/:id', (req, res) => {
+  const { id } = req.params;
+  const userIndex = users.findIndex(u => u.id === id);
+  
+  if (userIndex === -1) {
+    return res.status(404).json({ error: 'User not found' });
+  }
+
+  const userToDelete = users[userIndex];
+  
+  // Remove user from all groups
+  groups.forEach(group => {
+    group.members = group.members.filter(member => normalize(member) !== normalize(userToDelete.username));
+    group.admins = group.admins.filter(admin => normalize(admin) !== normalize(userToDelete.username));
+  });
+
+  // Remove user's join requests
+  joinRequests = joinRequests.filter(req => normalize(req.username) !== normalize(userToDelete.username));
+
+  users.splice(userIndex, 1);
+  saveData();
+  
+  res.json({ message: 'User deleted successfully' });
 });
 
 // --- GROUPS ---
@@ -141,6 +180,162 @@ app.post('/api/groups', (req, res) => {
   return res.status(201).json({ group });
 });
 
+// Delete group - Group Admin or Super Admin only
+app.delete('/api/groups/:id', (req, res) => {
+  const { id } = req.params;
+  const groupIndex = groups.findIndex(g => g.id === id);
+  
+  if (groupIndex === -1) {
+    return res.status(404).json({ error: 'Group not found' });
+  }
+
+  const group = groups[groupIndex];
+  
+  // Remove group from all users
+  users.forEach(user => {
+    user.groups = user.groups.filter(gid => gid !== id);
+  });
+
+  // Remove related join requests
+  joinRequests = joinRequests.filter(req => req.gid !== id);
+
+  groups.splice(groupIndex, 1);
+  saveData();
+  
+  res.json({ message: 'Group deleted successfully' });
+});
+
+// Add user to group
+app.post('/api/groups/:id/members', (req, res) => {
+  const { id } = req.params;
+  const { username } = req.body || {};
+  
+  if (!username?.trim()) return res.status(400).json({ error: 'username required' });
+  
+  const group = getGroupById(id);
+  if (!group) return res.status(404).json({ error: 'Group not found' });
+  
+  if (!hasUser(username)) return res.status(404).json({ error: 'User not found' });
+  
+  if (group.members.some(m => normalize(m) === normalize(username))) {
+    return res.status(400).json({ error: 'User already a member' });
+  }
+  
+  group.members.push(username.trim());
+  attachGroupToUser(username, id);
+  saveData();
+  
+  res.json({ message: 'User added to group successfully' });
+});
+
+// Remove user from group
+app.delete('/api/groups/:id/members/:username', (req, res) => {
+  const { id, username } = req.params;
+  
+  const group = getGroupById(id);
+  if (!group) return res.status(404).json({ error: 'Group not found' });
+  
+  group.members = group.members.filter(m => normalize(m) !== normalize(username));
+  group.admins = group.admins.filter(a => normalize(a) !== normalize(username));
+  
+  // Remove group from user
+  const user = getUserByUsername(username);
+  if (user) {
+    user.groups = user.groups.filter(gid => gid !== id);
+  }
+  
+  saveData();
+  res.json({ message: 'User removed from group successfully' });
+});
+
+// Add channel to group
+app.post('/api/groups/:id/channels', (req, res) => {
+  const { id } = req.params;
+  const { name } = req.body || {};
+  
+  if (!name?.trim()) return res.status(400).json({ error: 'channel name required' });
+  
+  const group = getGroupById(id);
+  if (!group) return res.status(404).json({ error: 'Group not found' });
+  
+  if (group.channels.some(c => normalize(c.name) === normalize(name))) {
+    return res.status(400).json({ error: 'Channel already exists in this group' });
+  }
+  
+  const channel = {
+    id: genCid(),
+    name: name.trim(),
+    members: []
+  };
+  
+  group.channels.push(channel);
+  saveData();
+  
+  res.status(201).json({ channel });
+});
+
+// Remove channel from group
+app.delete('/api/groups/:groupId/channels/:channelId', (req, res) => {
+  const { groupId, channelId } = req.params;
+  
+  const group = getGroupById(groupId);
+  if (!group) return res.status(404).json({ error: 'Group not found' });
+  
+  const channelIndex = group.channels.findIndex(c => c.id === channelId);
+  if (channelIndex === -1) return res.status(404).json({ error: 'Channel not found' });
+  
+  group.channels.splice(channelIndex, 1);
+  saveData();
+  
+  res.json({ message: 'Channel removed successfully' });
+});
+
+// Add user to channel
+app.post('/api/groups/:groupId/channels/:channelId/members', (req, res) => {
+  const { groupId, channelId } = req.params;
+  const { username } = req.body || {};
+  
+  if (!username?.trim()) return res.status(400).json({ error: 'username required' });
+  
+  const group = getGroupById(groupId);
+  if (!group) return res.status(404).json({ error: 'Group not found' });
+  
+  const channel = group.channels.find(c => c.id === channelId);
+  if (!channel) return res.status(404).json({ error: 'Channel not found' });
+  
+  if (!hasUser(username)) return res.status(404).json({ error: 'User not found' });
+  
+  // User must be a member of the group to be added to a channel
+  if (!group.members.some(m => normalize(m) === normalize(username))) {
+    return res.status(400).json({ error: 'User must be a member of the group first' });
+  }
+  
+  if (channel.members.some(m => normalize(m) === normalize(username))) {
+    return res.status(400).json({ error: 'User already a member of this channel' });
+  }
+  
+  channel.members.push(username.trim());
+  saveData();
+  
+  res.json({ message: 'User added to channel successfully' });
+});
+
+// Remove user from channel
+app.delete('/api/groups/:groupId/channels/:channelId/members/:username', (req, res) => {
+  const { groupId, channelId, username } = req.params;
+  
+  const group = getGroupById(groupId);
+  if (!group) return res.status(404).json({ error: 'Group not found' });
+  
+  const channel = group.channels.find(c => c.id === channelId);
+  if (!channel) return res.status(404).json({ error: 'Channel not found' });
+  
+  channel.members = channel.members.filter(m => normalize(m) !== normalize(username));
+  saveData();
+  
+  res.json({ message: 'User removed from channel successfully' });
+});
+
 // --- Join Requests ---
 app.post('/api/groups/:gid/requests', (req, res) => {
   const { gid } = req.params;
@@ -163,9 +358,5 @@ app.post('/api/groups/:gid/requests', (req, res) => {
   return res.status(201).json({ request: reqObj });
 });
 
-// --- More endpoints (see your prompt for details) ---
-// You can copy the rest of the endpoints from your prompt as needed.
-
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
-

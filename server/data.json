@@ -8,7 +8,9 @@
       "roles": [
         "Super Admin"
       ],
-      "groups": []
+      "groups": [
+        "g1756813642951404"
+      ]
     }
   ],
   "groups": [
@@ -25,9 +27,29 @@
       "channels": [
         {
           "id": "c17568093332824",
-          "name": "general"
+          "name": "general",
+          "members": []
+        },
+        {
+          "id": "c1756813538446434",
+          "name": "new",
+          "members": [
+            "super"
+          ]
         }
       ]
+    },
+    {
+      "id": "g1756813642951404",
+      "name": "newgroup",
+      "ownerUsername": "super",
+      "admins": [
+        "super"
+      ],
+      "members": [
+        "super"
+      ],
+      "channels": []
     }
   ],
   "joinRequests": []

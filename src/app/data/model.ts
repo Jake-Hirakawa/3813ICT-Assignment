@@ -1,19 +1,31 @@
-export class User {
-  constructor(
-    public id: number,
-    public username: string,
-    public email: string,
-    public roles: string[],
-    public groups: number[]
-  ) {}
+// src/app/data/model.ts
+export interface User {
+  id: string;
+  username: string;
+  email: string;
+  roles: string[];
+  groups: string[];
 }
 
-export class Group {
-  constructor(
-    public id: number,
-    public name: string,
-    public description: string,
-    public members: number[],
-    public channels: number[]
-  ) {}
+export interface Group {
+  id: string;
+  name: string;
+  ownerUsername: string;
+  admins: string[];
+  members: string[];
+  channels: Channel[];
+}
+
+export interface Channel {
+  id: string;
+  name: string;
+  members: string[];
+}
+
+export interface JoinRequest {
+  id: string;
+  gid: string;
+  username: string;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: number;
 }
