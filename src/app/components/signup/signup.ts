@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { DataService } from '../../services/data.service';
-import { CreateUser } from '../../data/model';
+import { CreateUser } from '../../model/model';
 
 @Component({
   selector: 'app-signup',

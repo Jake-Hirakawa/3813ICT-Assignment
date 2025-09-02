@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { User, Group, Channel, CreateUser, CreateGroup, CreateChannel } from '../data/model';
+import { User, Group, Channel, CreateUser, CreateGroup, CreateChannel, GroupJoinRequest, UserChannelMembership } from '../model/model';
 
 @Injectable({
   providedIn: 'root'
@@ -9,9 +9,12 @@ export class DataService {
     users: 'chat_users',
     groups: 'chat_groups', 
     channels: 'chat_channels',
+    groupJoinRequests: 'chat_group_join_requests',
+    channelMemberships: 'chat_channel_memberships',
     nextUserId: 'next_user_id',
     nextGroupId: 'next_group_id',
-    nextChannelId: 'next_channel_id'
+    nextChannelId: 'next_channel_id',
+    nextRequestId: 'next_request_id'
   };
 
   constructor() {
@@ -93,9 +96,12 @@ export class DataService {
       this.saveToStorage(this.STORAGE_KEYS.users, defaultUsers);
       this.saveToStorage(this.STORAGE_KEYS.groups, defaultGroups);
       this.saveToStorage(this.STORAGE_KEYS.channels, defaultChannels);
+      this.saveToStorage(this.STORAGE_KEYS.groupJoinRequests, []);
+      this.saveToStorage(this.STORAGE_KEYS.channelMemberships, []);
       this.saveToStorage(this.STORAGE_KEYS.nextUserId, 4);
-      this.saveToStorage(this.STORAGE_KEYS.nextGroupId, 2);
+      this.saveToStorage(this.STORAGE_KEYS.nextGroupId, 3);
       this.saveToStorage(this.STORAGE_KEYS.nextChannelId, 3);
+      this.saveToStorage(this.STORAGE_KEYS.nextRequestId, 1);
     }
   }
 
@@ -201,9 +207,175 @@ export class DataService {
     return newGroup;
   }
 
+  updateGroup(id: number, groupData: Partial<Group>): boolean {
+    const groups = this.getGroups();
+    const groupIndex = groups.findIndex(group => group.id === id);
+    
+    if (groupIndex !== -1) {
+      groups[groupIndex] = { ...groups[groupIndex], ...groupData };
+      this.saveToStorage(this.STORAGE_KEYS.groups, groups);
+      return true;
+    }
+    return false;
+  }
+
+  deleteGroup(id: number): boolean {
+    const groups = this.getGroups();
+    const groupIndex = groups.findIndex(group => group.id === id);
+    
+    if (groupIndex !== -1) {
+      // Delete all channels in this group
+      const channels = this.getChannels();
+      const filteredChannels = channels.filter(channel => channel.groupId !== id);
+      this.saveToStorage(this.STORAGE_KEYS.channels, filteredChannels);
+      
+      // Remove group from all users
+      const users = this.getUsers();
+      users.forEach(user => {
+        user.groups = user.groups.filter(groupId => groupId !== id);
+      });
+      this.saveToStorage(this.STORAGE_KEYS.users, users);
+
+      groups.splice(groupIndex, 1);
+      this.saveToStorage(this.STORAGE_KEYS.groups, groups);
+      return true;
+    }
+    return false;
+  }
+
+  addUserToGroup(userId: number, groupId: number): boolean {
+    const user = this.getUserById(userId);
+    const group = this.getGroupById(groupId);
+    
+    if (user && group && !group.members.includes(userId)) {
+      group.members.push(userId);
+      user.groups.push(groupId);
+      
+      this.updateUser(userId, user);
+      
+      const groups = this.getGroups();
+      const groupIndex = groups.findIndex(g => g.id === groupId);
+      groups[groupIndex] = group;
+      this.saveToStorage(this.STORAGE_KEYS.groups, groups);
+      
+      return true;
+    }
+    return false;
+  }
+
+  removeUserFromGroup(userId: number, groupId: number): boolean {
+    const user = this.getUserById(userId);
+    const group = this.getGroupById(groupId);
+    
+    if (user && group && group.members.includes(userId)) {
+      group.members = group.members.filter(id => id !== userId);
+      user.groups = user.groups.filter(id => id !== groupId);
+
+      this.updateUser(userId, user);
+
+      const groups = this.getGroups();
+      const groupIndex = groups.findIndex(g => g.id === groupId);
+      groups[groupIndex] = group;
+      this.saveToStorage(this.STORAGE_KEYS.groups, groups);
+      
+      return true;
+    }
+    return false;   
+  }
+
+  // Group Join Request methods
+  getGroupJoinRequests(): GroupJoinRequest[] {
+    return this.getFromStorage<GroupJoinRequest[]>(this.STORAGE_KEYS.groupJoinRequests, []);
+  }
+
+  getUserPendingRequests(userId: number): GroupJoinRequest[] {
+    return this.getGroupJoinRequests().filter(req => 
+      req.userId === userId && req.status === 'pending'
+    );
+  }
+
+  getPendingRequestsForGroup(groupId: number): GroupJoinRequest[] {
+    return this.getGroupJoinRequests().filter(req => 
+      req.groupId === groupId && req.status === 'pending'
+    );
+  }
+
+  createGroupJoinRequest(requestData: {
+    userId: number;
+    groupId: number; 
+    status: 'pending';
+  }): GroupJoinRequest {
+    const requests = this.getGroupJoinRequests();
+    const nextId = this.getFromStorage<number>(this.STORAGE_KEYS.nextRequestId, 1);
+    
+    // Check if user already has a pending request for this group
+    const existingRequest = requests.find(req => 
+      req.userId === requestData.userId && 
+      req.groupId === requestData.groupId && 
+      req.status === 'pending'
+    );
+    
+    if (existingRequest) {
+      throw new Error('You already have a pending request for this group');
+    }
+    
+    const newRequest: GroupJoinRequest = {
+      id: nextId,
+      userId: requestData.userId,
+      groupId: requestData.groupId,
+      status: 'pending',
+      requestedAt: new Date()
+    };
+
+    requests.push(newRequest);
+    this.saveToStorage(this.STORAGE_KEYS.groupJoinRequests, requests);
+    this.saveToStorage(this.STORAGE_KEYS.nextRequestId, nextId + 1);
+    
+    return newRequest;
+  }
+
+  approveGroupJoinRequest(requestId: number, adminId: number): boolean {
+    const requests = this.getGroupJoinRequests();
+    const requestIndex = requests.findIndex(req => req.id === requestId);
+    
+    if (requestIndex !== -1) {
+      const request = requests[requestIndex];
+      request.status = 'approved';
+      request.respondedAt = new Date();
+      request.respondedBy = adminId;
+      
+      // Add user to group
+      this.addUserToGroup(request.userId, request.groupId);
+      
+      this.saveToStorage(this.STORAGE_KEYS.groupJoinRequests, requests);
+      return true;
+    }
+    return false;
+  }
+
+  denyGroupJoinRequest(requestId: number, adminId: number): boolean {
+    const requests = this.getGroupJoinRequests();
+    const requestIndex = requests.findIndex(req => req.id === requestId);
+    
+    if (requestIndex !== -1) {
+      const request = requests[requestIndex];
+      request.status = 'denied';
+      request.respondedAt = new Date();
+      request.respondedBy = adminId;
+      
+      this.saveToStorage(this.STORAGE_KEYS.groupJoinRequests, requests);
+      return true;
+    }
+    return false;
+  }
+
   // Channel methods
   getChannels(): Channel[] {
     return this.getFromStorage<Channel[]>(this.STORAGE_KEYS.channels, []);
+  }
+
+  getChannelById(id: number): Channel | undefined {
+    return this.getChannels().find(channel => channel.id === id);
   }
 
   getChannelsByGroupId(groupId: number): Channel[] {
@@ -236,44 +408,90 @@ export class DataService {
     return newChannel;
   }
 
-  // Utility methods
-  addUserToGroup(userId: number, groupId: number): boolean {
-    const user = this.getUserById(userId);
-    const group = this.getGroupById(groupId);
+  updateChannel(id: number, channelData: Partial<Channel>): boolean {
+    const channels = this.getChannels();
+    const channelIndex = channels.findIndex(channel => channel.id === id);
     
-    if (user && group && !group.members.includes(userId)) {
-      group.members.push(userId);
-      user.groups.push(groupId);
-      
-      this.updateUser(userId, user);
-      
-      const groups = this.getGroups();
-      const groupIndex = groups.findIndex(g => g.id === groupId);
-      groups[groupIndex] = group;
-      this.saveToStorage(this.STORAGE_KEYS.groups, groups);
-      
+    if (channelIndex !== -1) {
+      channels[channelIndex] = { ...channels[channelIndex], ...channelData };
+      this.saveToStorage(this.STORAGE_KEYS.channels, channels);
       return true;
     }
     return false;
   }
 
-  removeUserFromGroup(userId: number, groupId: number): boolean {
-  const user = this.getUserById(userId);
-  const group = this.getGroupById(groupId);
-  
-  if (user && group && group.members.includes(userId)) {
-    group.members = group.members.filter(id => id !== userId);
-    user.groups = user.groups.filter(id => id !== groupId);
-
-    this.updateUser(userId, user);
-
-    const groups = this.getGroups();
-    const groupIndex = groups.findIndex(g => g.id === groupId);
-    groups[groupIndex] = group;
-    this.saveToStorage(this.STORAGE_KEYS.groups, groups);
+  deleteChannel(id: number): boolean {
+    const channels = this.getChannels();
+    const channelIndex = channels.findIndex(channel => channel.id === id);
     
-    return true;
+    if (channelIndex !== -1) {
+      const channel = channels[channelIndex];
+      
+      // Remove channel from group
+      const groups = this.getGroups();
+      const group = groups.find(g => g.id === channel.groupId);
+      if (group) {
+        group.channels = group.channels.filter(channelId => channelId !== id);
+        this.saveToStorage(this.STORAGE_KEYS.groups, groups);
+      }
+
+      channels.splice(channelIndex, 1);
+      this.saveToStorage(this.STORAGE_KEYS.channels, channels);
+      return true;
+    }
+    return false;
   }
-  return false;   
-}
+
+  // Channel Membership methods
+  getChannelMemberships(): UserChannelMembership[] {
+    return this.getFromStorage<UserChannelMembership[]>(this.STORAGE_KEYS.channelMemberships, []);
+  }
+
+  getUserChannelMemberships(userId: number): UserChannelMembership[] {
+    return this.getChannelMemberships().filter(membership => membership.userId === userId);
+  }
+
+  joinChannel(userId: number, channelId: number): boolean {
+    const memberships = this.getChannelMemberships();
+    
+    // Check if already a member
+    const existingMembership = memberships.find(m => 
+      m.userId === userId && m.channelId === channelId
+    );
+    
+    if (!existingMembership) {
+      const newMembership: UserChannelMembership = {
+        userId,
+        channelId,
+        joinedAt: new Date()
+      };
+      
+      memberships.push(newMembership);
+      this.saveToStorage(this.STORAGE_KEYS.channelMemberships, memberships);
+      return true;
+    }
+    return false;
+  }
+
+  leaveChannel(userId: number, channelId: number): boolean {
+    const memberships = this.getChannelMemberships();
+    const filteredMemberships = memberships.filter(m => 
+      !(m.userId === userId && m.channelId === channelId)
+    );
+    
+    if (filteredMemberships.length < memberships.length) {
+      this.saveToStorage(this.STORAGE_KEYS.channelMemberships, filteredMemberships);
+      return true;
+    }
+    return false;
+  }
+
+  getUserJoinedChannels(userId: number): Channel[] {
+    const memberships = this.getUserChannelMemberships(userId);
+    const channels = this.getChannels();
+    
+    return channels.filter(channel => 
+      memberships.some(m => m.channelId === channel.id)
+    );
+  }
 }

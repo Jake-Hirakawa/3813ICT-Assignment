@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { DataService } from './data.service';
-import { User, UserRole } from '../data/model';
+import { User, UserRole } from '../model/model';
 
 @Injectable({
   providedIn: 'root'
