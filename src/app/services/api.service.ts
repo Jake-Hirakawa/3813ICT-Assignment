@@ -1,44 +1,28 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { User } from '../data/model';
 
-export interface LoginResponse {
-  user?: User;
-  error?: string;
-}
-
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class ApiService {
-  private baseUrl = 'http://localhost:3000/api';
-
+  base = 'http://localhost:3000/api';
   constructor(private http: HttpClient) {}
 
-  // Login method
-  login(username: string, password: string): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.baseUrl}/auth/login`, {
-      username,
-      password
-    });
+  // Login → takes a payload object instead of separate params
+  login(payload: { username: string; password: string }) {
+    return this.http.post<{ user: any }>(`${this.base}/auth/login`, payload);
   }
 
-  // Get all users
-  getUsers(): Observable<{users: User[]}> {
-    return this.http.get<{users: User[]}>(`${this.baseUrl}/users`);
+  // Get all users → returns loosely typed { users: any[] }
+  getUsers() {
+    return this.http.get<{ users: any[] }>(`${this.base}/users`);
   }
-  
+
   // Get all groups
-  getGroups(): Observable<{groups: any[]}> {
-    return this.http.get<{groups: any[]}>(`${this.baseUrl}/groups`);
+  getGroups() {
+    return this.http.get<{ groups: any[] }>(`${this.base}/groups`);
   }
 
-  // Create user
-  createUser(username: string, email: string): Observable<{user: User}> {
-    return this.http.post<{user: User}>(`${this.baseUrl}/createuser`, {
-      username,
-      email
-    });
+  // Create user → takes payload object
+  addUser(payload: { username: string; email: string }) {
+    return this.http.post<{ user: any }>(`${this.base}/users`, payload);
   }
 }

@@ -8,13 +8,13 @@ import { User } from '../data/model';
   providedIn: 'root'
 })
 export class AuthService {
-  constructor(private apiService: ApiService) {}
+  constructor(private api: ApiService) {}
 
   // Login: calls server, saves user if successful
   login(username: string, password: string): Observable<boolean> {
-    return this.apiService.login(username, password).pipe(
+    return this.api.login({ username, password }).pipe(  // <-- payload object
       map(response => {
-        if (response.user && !response.error) {
+        if (response.user) {   // <-- simplified (no response.error in new API)
           localStorage.setItem('currentUser', JSON.stringify(response.user));
           return true;
         } else {
