@@ -123,17 +123,51 @@ interface Channel {
 
 ## Angular Architecture
 
-**Components:**
-- **LoginComponent**: Authentication form, validation, redirects
-- **DashboardComponent**: Role-based UI (Super Admin: user mgmt, Group Admin: group mgmt, User: view only)
+### Components
 
-**Services:**  
-- **AuthService**: localStorage session management, getCurrentUser(), login(), logout()
-- **ApiService**: HTTP client wrapper for all server endpoints
+#### LoginComponent (`src/app/components/login/`)
+- **Purpose**: User authentication interface with server validation
+- **Template**: Reactive form with username/password fields and error handling
+- **Styling**: Responsive design with loading states and validation feedback
+- **Dependencies**: AuthService for authentication, Router for navigation
+- **Key Methods**:
+  - `onLogin()`: Validates input and calls AuthService.login()
+  - `ngOnInit()`: Redirects if user already authenticated
 
-**Models:** TypeScript interfaces in `data/model.ts` (User, Group, Channel)
+#### DashboardComponent (`src/app/components/dashboard/`)
+- **Purpose**: Main application interface with role-based functionality
+- **Template**: Dynamic content rendering based on user roles
+- **Styling**: Grid-based layout with responsive design for different screen sizes
+- **Dependencies**: AuthService, ApiService, Router
+- **Key Methods**:
+  - `loadUsers()`: Fetches all users for Super Admin view
+  - `loadGroups()`: Fetches groups with channels and memberships
+  - `createUser()`: Super Admin user creation functionality
+  - `createGroup()`: Group Admin group creation
+  - `addUserToGroup()`: Member management functionality
+  - `addChannelToGroup()`: Channel creation and management
 
-**Routes:** Login (public), Dashboard (AuthGuard protected)
+### Services
+
+#### AuthService (`src/app/services/auth.service.ts`)
+- **Purpose**: Authentication state management and session handling
+- **Storage**: Uses localStorage for session persistence
+- **Methods**:
+  - `login(username, password)`: Server authentication with credential validation
+  - `logout()`: Session cleanup and localStorage clearing
+  - `getCurrentUser()`: Retrieves current user from localStorage
+  - `isLoggedIn()`: Boolean authentication status check
+
+#### ApiService (`src/app/services/api.service.ts`)
+- **Purpose**: HTTP communication layer with Express server
+- **Base URL**: `http://localhost:3000/api`
+- **Methods**:
+  - **Authentication**: `login(payload)`
+  - **User Management**: `getUsers()`, `addUser()`, `deleteUser()`
+  - **Group Management**: `getGroups()`, `createGroup()`, `deleteGroup()`
+  - **Member Management**: `addUserToGroup()`, `removeUserFromGroup()`
+  - **Channel Management**: `addChannelToGroup()`, `removeChannelFromGroup()`
+  - **Channel Membership**: `addUserToChannel()`, `removeUserFromChannel()`
 
 ## Node Server Architecture
 
