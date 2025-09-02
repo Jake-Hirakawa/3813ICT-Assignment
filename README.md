@@ -149,29 +149,107 @@ interface Channel {
 
 **Files:** Single server.js with organized route sections
 
-## Server Routes
+## Server Side Routes
 
-### Authentication
-- `POST /api/auth/login` - Body: `{username, password}` - Returns: `{user}` or 401
+### Authentication Routes
 
-### User Management  
-- `GET /api/users` - Returns: `{users[]}` (Super Admin view)
-- `POST /api/users` - Body: `{username, email, password?}` - Returns: `{user}` or 409
-- `DELETE /api/users/:id` - Returns: `{message}` (Super Admin only)
+#### POST `/api/auth/login`
+- **Parameters**: `{ username: string, password: string }`
+- **Returns**: `{ user: User }` (success) or `{ error: string }` (failure)
+- **Purpose**: User authentication with password validation
+- **Status Codes**: 200 (success), 401 (invalid credentials)
 
-### Group Management
-- `GET /api/groups` - Returns: `{groups[]}` 
-- `POST /api/groups` - Body: `{name, ownerUsername}` - Returns: `{group}` or 403
-- `DELETE /api/groups/:id` - Returns: `{message}`
-- `POST /api/groups/:id/members` - Body: `{username}` - Returns: `{message}`
-- `DELETE /api/groups/:id/members/:username` - Returns: `{message}`
+### User Management Routes
 
-### Channel Management
-- `POST /api/groups/:id/channels` - Body: `{name}` - Returns: `{channel}`  
-- `DELETE /api/groups/:groupId/channels/:channelId` - Returns: `{message}`
-- `POST /api/groups/:groupId/channels/:channelId/members` - Body: `{username}` - Returns: `{message}`
-- `DELETE /api/groups/:groupId/channels/:channelId/members/:username` - Returns: `{message}`
+#### GET `/api/users`
+- **Parameters**: None
+- **Returns**: `{ users: User[] }` (passwords excluded)
+- **Purpose**: Retrieve all users for Super Admin interface
+- **Status Codes**: 200 (success)
 
+#### POST `/api/users`
+- **Parameters**: `{ username: string, email: string, password?: string }`
+- **Returns**: `{ user: User }` (success) or `{ error: string }` (failure)
+- **Purpose**: Create new user account
+- **Status Codes**: 201 (created), 400 (validation error), 409 (username exists)
+
+#### DELETE `/api/users/:id`
+- **Parameters**: User ID in URL path
+- **Returns**: `{ message: string }`
+- **Purpose**: Delete user and remove from all groups (Super Admin only)
+- **Status Codes**: 200 (success), 404 (user not found)
+
+### Group Management Routes
+
+#### GET `/api/groups`
+- **Parameters**: None
+- **Returns**: `{ groups: Group[] }`
+- **Purpose**: Retrieve all groups with channels and membership data
+- **Status Codes**: 200 (success)
+
+#### POST `/api/groups`
+- **Parameters**: `{ name: string, ownerUsername: string }`
+- **Returns**: `{ group: Group }` (success) or `{ error: string }` (failure)
+- **Purpose**: Create new group (Group Admin or Super Admin only)
+- **Status Codes**: 201 (created), 400 (validation error), 403 (insufficient permissions), 404 (owner not found)
+
+#### DELETE `/api/groups/:id`
+- **Parameters**: Group ID in URL path
+- **Returns**: `{ message: string }`
+- **Purpose**: Delete group and remove from all users
+- **Status Codes**: 200 (success), 404 (group not found)
+
+### Member Management Routes
+
+#### POST `/api/groups/:id/members`
+- **Parameters**: Group ID in URL path, `{ username: string }` in body
+- **Returns**: `{ message: string }`
+- **Purpose**: Add user to group membership
+- **Status Codes**: 200 (success), 400 (validation error), 404 (group/user not found)
+
+#### DELETE `/api/groups/:id/members/:username`
+- **Parameters**: Group ID and username in URL path
+- **Returns**: `{ message: string }`
+- **Purpose**: Remove user from group membership
+- **Status Codes**: 200 (success), 404 (group not found)
+
+### Channel Management Routes
+
+#### POST `/api/groups/:id/channels`
+- **Parameters**: Group ID in URL path, `{ name: string }` in body
+- **Returns**: `{ channel: Channel }`
+- **Purpose**: Create channel within group
+- **Status Codes**: 201 (created), 400 (validation error/duplicate name), 404 (group not found)
+
+#### DELETE `/api/groups/:groupId/channels/:channelId`
+- **Parameters**: Group ID and Channel ID in URL path
+- **Returns**: `{ message: string }`
+- **Purpose**: Delete channel from group
+- **Status Codes**: 200 (success), 404 (group/channel not found)
+
+### Channel Membership Routes
+
+#### POST `/api/groups/:groupId/channels/:channelId/members`
+- **Parameters**: Group/Channel IDs in path, `{ username: string }` in body
+- **Returns**: `{ message: string }`
+- **Purpose**: Add user to channel (must be group member first)
+- **Status Codes**: 200 (success), 400 (validation/membership error), 404 (not found)
+
+#### DELETE `/api/groups/:groupId/channels/:channelId/members/:username`
+- **Parameters**: Group ID, Channel ID, and username in URL path
+- **Returns**: `{ message: string }`
+- **Purpose**: Remove user from channel membership
+- **Status Codes**: 200 (success), 404 (group/channel not found)
+
+## Data Flow Summary
+
+Each route follows this pattern:
+1. **Validate Parameters**: Check required fields and data types
+2. **Authorize Access**: Verify user permissions for the operation
+3. **Validate Business Rules**: Ensure data integrity (uniqueness, relationships)
+4. **Update Data Structures**: Modify in-memory arrays
+5. **Persist Changes**: Save updated data to JSON file using atomic write
+6. **Return Response**: Send success data or error message with appropriate HTTP status code
 ## Client-Server Interaction
 
 **Pattern:** Client Action → API Call → Server Array Update → JSON Save → Client Display Refresh
