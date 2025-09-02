@@ -28,18 +28,6 @@
     <button type="submit" [disabled]="!loginForm.form.valid" class="login-btn">
       Login
     </button>
-
-    <button type="button" (click)="goToSignUp()" class="register-link-btn">
-      Create New Account
-    </button>
-    
     <p *ngIf="errorMessage" class="error-message">{{errorMessage}}</p>
   </form>
-  
-  <div class="test-accounts">
-    <h4>Test Accounts:</h4>
-    <p><strong>Super Admin:</strong> super / 123</p>
-    <p><strong>Group Admin:</strong> groupadmin1 / admin123</p>
-    <p><strong>User:</strong> user1 / user123</p>
-  </div>
 </div>

@@ -1,0 +1,41 @@
+{
+  "users": [
+    {
+      "id": "u1",
+      "username": "super",
+      "email": "super@example.com",
+      "password": "123",
+      "roles": [
+        "Super Admin"
+      ],
+      "groups": [
+        "g1756813642951404"
+      ]
+    },
+    {
+      "id": "u1756815509453331",
+      "username": "jake",
+      "email": "jakehirakawa@outlook.com",
+      "password": "123",
+      "roles": [
+        "User"
+      ],
+      "groups": []
+    }
+  ],
+  "groups": [
+    {
+      "id": "g1756813642951404",
+      "name": "newgroup",
+      "ownerUsername": "super",
+      "admins": [
+        "super"
+      ],
+      "members": [
+        "super"
+      ],
+      "channels": []
+    }
+  ],
+  "joinRequests": []
+}

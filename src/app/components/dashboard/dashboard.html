@@ -1,306 +1,232 @@
 <div class="dashboard-container">
   <header class="dashboard-header">
-    <h1>Chat System Dashboard</h1>
+    <h1>Dashboard</h1>
     <div class="user-info">
-      @if (currentUser) {
-        <span>Welcome, {{currentUser.username}}!</span>
-        <span class="user-role">({{currentUser.roles.join(', ')}})</span>
-      }
+      <span>Welcome, {{ currentUser?.username }} ({{ getCurrentUserRole() }})</span>
       <button (click)="logout()" class="logout-btn">Logout</button>
     </div>
   </header>
 
-  <main class="dashboard-content">
-
-    <!-- ========================== -->
-    <!-- Base User Functionality -->
-    <!-- ========================== -->
-    <div class="user-section">
-      <h2>User Dashboard</h2>
-
-      <!-- My Joined Channels -->
-      <div class="data-section">
-        <h3>My Channels ({{getUserJoinedChannels().length}})</h3>
-        @if (getUserJoinedChannels().length > 0) {
-          <div class="channels-list">
-            @for (channel of getUserJoinedChannels(); track channel.id) {
-              <div class="channel-item">
-                <div class="channel-details">
-                  <strong>{{channel.name}}</strong>
-                  <p>{{channel.description}}</p>
-                  <span class="channel-info">Group: {{getGroupNameById(channel.groupId)}}</span>
-                </div>
-                <div class="channel-actions">
-                  <button (click)="leaveChannel(channel.id)" class="leave-btn">Leave Channel</button>
-                </div>
-              </div>
-            }
-          </div>
-        } @else {
-          <div class="empty-message">
-            <p>You haven't joined any channels yet. Join channels in your groups below!</p>
-          </div>
-        }
-      </div>
-
-      <!-- My Groups -->
-      <div class="data-section">
-        <div class="section-header">
-          <h3>My Groups ({{userGroups.length}})</h3>
-          <button (click)="deleteSelf()" class="delete-self-btn">Delete My Account</button>
+  <!-- Super Admin Section -->
+  @if (isSuperAdmin()) {
+    <div class="admin-section">
+      <h2>Super Admin Controls</h2>
+      
+      <!-- User Management -->
+      <div class="management-panel">
+        <h3>User Management</h3>
+        
+        <!-- Add User Form -->
+        <div class="form-section">
+          <h4>Create New User</h4>
+          <form (ngSubmit)="createUser()" class="user-form">
+            <div class="form-row">
+              <input 
+                [(ngModel)]="newUser.username" 
+                name="username"
+                placeholder="Username" 
+                required
+                class="form-input">
+              <input 
+                [(ngModel)]="newUser.email" 
+                name="email"
+                type="email"
+                placeholder="Email" 
+                required
+                class="form-input">
+              <input 
+                [(ngModel)]="newUser.password" 
+                name="password"
+                type="password"
+                placeholder="Password" 
+                class="form-input">
+              <button type="submit" class="btn btn-primary">Create User</button>
+            </div>
+          </form>
         </div>
 
-        @if (userGroups.length > 0) {
-          <div class="groups-list">
-            @for (group of userGroups; track group.id) {
-              <div class="group-item">
-                <div class="group-details">
-                  <strong>{{group.name}}</strong>
-                  <p>{{group.description}}</p>
-                  <span class="group-info">Admin: {{getUsernameById(group.adminId)}}</span>
+        <!-- Users List -->
+        <div class="list-section">
+          <h4>All Users</h4>
+          <div class="users-grid">
+            @for (user of users; track user.id) {
+              <div class="user-card">
+                <div class="user-info">
+                  <strong>{{ user.username }}</strong>
+                  <p>{{ user.email }}</p>
+                  <span class="user-roles">{{ user.roles?.join(', ') }}</span>
                 </div>
-
-                <!-- Channels in Group -->
-                <div class="channels-section">
-                  <h4>Channels:</h4>
-                  @if (getChannelsForGroup(group.id).length > 0) {
-                    <div class="channels-grid">
-                      @for (channel of getChannelsForGroup(group.id); track channel.id) {
-                        <div class="channel-card" [class.joined]="isUserMemberOfChannel(channel.id)">
-                          <div class="channel-info">
-                            <strong>{{channel.name}}</strong>
-                            <p>{{channel.description}}</p>
-                          </div>
-                          <div class="channel-actions">
-                            @if (!isUserMemberOfChannel(channel.id)) {
-                              <button (click)="joinChannel(channel.id)" class="join-channel-btn">
-                                Join Channel
-                              </button>
-                            } @else {
-                              <span class="joined-badge">✓ Joined</span>
-                              <button (click)="leaveChannel(channel.id)" class="leave-channel-btn">
-                                Leave
-                              </button>
-                            }
-                          </div>
-                        </div>
-                      }
-                    </div>
-                  } @else {
-                    <p class="no-channels">No channels in this group yet.</p>
-                  }
-                </div>
-
-                <div class="group-actions">
-                  <button (click)="leaveGroup(group.id)" class="leave-btn">Leave Group</button>
-                </div>
+                @if (user.username !== 'super') {
+                  <button 
+                    (click)="deleteUser(user)" 
+                    class="btn btn-danger btn-sm">
+                    Delete
+                  </button>
+                }
               </div>
             }
           </div>
-        } @else {
-          <div class="empty-message">
-            <p>You're not a member of any groups yet. Join some groups below!</p>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Group Admin Section -->
+  @if (isGroupAdmin() || isSuperAdmin()) {
+    <div class="admin-section">
+      <h2>Group Management</h2>
+      
+      <!-- Create Group Form -->
+      <div class="form-section">
+        <h4>Create New Group</h4>
+        <form (ngSubmit)="createGroup()" class="group-form">
+          <div class="form-row">
+            <input 
+              [(ngModel)]="newGroup.name" 
+              name="groupName"
+              placeholder="Group Name" 
+              required
+              class="form-input">
+            <button type="submit" class="btn btn-primary">Create Group</button>
           </div>
-        }
+        </form>
       </div>
 
-      <!-- Available Groups to Join -->
-      <div class="data-section">
-        <h3>Available Groups to Join</h3>
+      <!-- Groups List -->
+      <div class="list-section">
+        <h4>All Groups</h4>
         <div class="groups-list">
           @for (group of groups; track group.id) {
-            <div class="group-item" [class.already-member]="isUserMemberOfGroup(group.id)">
-              <div class="group-details">
-                <strong>{{group.name}}</strong>
-                <p>{{group.description}}</p>
-                <span class="group-info">Admin: {{getUsernameById(group.adminId)}}</span>
-                <span class="group-info">Members: {{group.members.length}}</span>
-                <span class="group-info">Channels: {{getChannelsForGroup(group.id).length}}</span>
+            <div class="group-card">
+              <div class="group-header">
+                <h5>{{ group.name }}</h5>
+                <div class="group-actions">
+                  <button (click)="deleteGroup(group)" class="btn btn-danger btn-sm">Delete Group</button>
+                </div>
               </div>
-              <div class="group-actions">
-                @if (!isUserMemberOfGroup(group.id) && !hasPendingRequestForGroup(group.id)) {
-                  <button (click)="requestJoinGroup(group.id)" class="join-btn">
-                    Request to Join
-                  </button>
-                }
-                @if (isUserMemberOfGroup(group.id)) {
-                  <span class="member-badge">✓ Member</span>
-                }
-                @if (hasPendingRequestForGroup(group.id)) {
-                  <span class="pending-badge">⏳ Request Pending</span>
-                }
+              
+              <div class="group-details">
+                <div class="group-section">
+                  <h6>Members ({{ group.members.length || 0 }})</h6>
+                  <div class="members-list">
+                    @for (member of group.members; track member) {
+                      <span class="member-tag">
+                        {{ member }}
+                        <button (click)="removeUserFromGroup(group, member)" class="remove-btn">x</button>
+                      </span>
+                    }
+                  </div>
+                  
+                  <!-- Add User to Group -->
+                  <div class="add-member-form">
+                    <select [(ngModel)]="selectedUserForGroup[group.id]" class="form-select">
+                      <option value="">Select user to add...</option>
+                      @for (user of getAvailableUsersForGroup(group); track user.id) {
+                        <option [value]="user.username">
+                          {{ user.username }}
+                        </option>
+                      }
+                    </select>
+                    <button 
+                      (click)="addUserToGroup(group, selectedUserForGroup[group.id])"
+                      [disabled]="!selectedUserForGroup[group.id]"
+                      class="btn btn-secondary btn-sm">
+                      Add User
+                    </button>
+                  </div>
+                </div>
+
+                <div class="group-section">
+                  <h6>Channels ({{ group.channels.length || 0 }})</h6>
+                  
+                  <!-- Add Channel Form -->
+                  <div class="add-channel-form">
+                    <input 
+                      [(ngModel)]="newChannelName[group.id]" 
+                      placeholder="Channel name"
+                      class="form-input form-input-sm">
+                    <button 
+                      (click)="addChannelToGroup(group, newChannelName[group.id])"
+                      [disabled]="!newChannelName[group.id]"
+                      class="btn btn-secondary btn-sm">
+                      Add Channel
+                    </button>
+                  </div>
+                  
+                  <!-- Channels List -->
+                  <div class="channels-list">
+                    @for (channel of group.channels; track channel.id) {
+                      <div class="channel-item">
+                        <div class="channel-header">
+                          <strong># {{ channel.name }}</strong>
+                          <button (click)="removeChannelFromGroup(group, channel)" class="btn btn-danger btn-xs">Delete</button>
+                        </div>
+                        
+                        <div class="channel-members">
+                          @for (member of channel.members; track member) {
+                            <span class="member-tag">
+                              {{ member }}
+                              <button (click)="removeUserFromChannel(group, channel, member)" class="remove-btn">×</button>
+                            </span>
+                          }
+                        </div>
+                        
+                        <!-- Add User to Channel -->
+                        <div class="add-to-channel">
+                          <select [(ngModel)]="selectedUserForChannel[group.id + '_' + channel.id]" class="form-select form-select-sm">
+                            <option value="">Add member to channel...</option>
+                            @for (member of getAvailableUsersForChannel(group, channel); track member) {
+                              <option [value]="member">
+                                {{ member }}
+                              </option>
+                            }
+                          </select>
+                          <button 
+                            (click)="addUserToChannel(group, channel, selectedUserForChannel[group.id + '_' + channel.id])"
+                            [disabled]="!selectedUserForChannel[group.id + '_' + channel.id]"
+                            class="btn btn-secondary btn-xs">
+                            Add
+                          </button>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
               </div>
             </div>
           }
         </div>
       </div>
     </div>
+  }
 
-    <!-- ========================== -->
-    <!-- Group Admin Functionality -->
-    <!-- ========================== -->
-    @if (isGroupAdmin) {
-      <div class="admin-section">
-        <h2>Group Admin Tools</h2>
-
-        <!-- Join Requests -->
-        @if (getPendingRequestsForMyGroups().length > 0) {
-          <div class="data-section">
-            <h3>Pending Join Requests ({{getPendingRequestsForMyGroups().length}})</h3>
-            <div class="requests-list">
-              @for (request of getPendingRequestsForMyGroups(); track request.id) {
-                <div class="request-item">
-                  <div class="request-details">
-                    <strong>{{getJoinRequestDetails(request).username}}</strong>
-                    <span>wants to join</span>
-                    <strong>{{getJoinRequestDetails(request).groupName}}</strong>
-                    <span class="request-date">
-                      Requested: {{getJoinRequestDetails(request).requestedAt | date:'short'}}
-                    </span>
-                  </div>
-                  <div class="request-actions">
-                    <button (click)="approveJoinRequest(request.id)" class="btn-approve">Approve</button>
-                    <button (click)="denyJoinRequest(request.id)" class="btn-deny">Deny</button>
-                  </div>
-                </div>
+  <!-- Regular User Section -->
+  @if (!isSuperAdmin() && !isGroupAdmin()) {
+    <div class="user-section">
+      <h2>Welcome to the Dashboard</h2>
+      <p>You are logged in as a regular user.</p>
+      
+      <div class="user-groups">
+        <h3>Your Groups</h3>
+        @for (group of getUserGroups(); track group.id) {
+          <div class="user-group-card">
+            <h4>{{ group.name }}</h4>
+            <p>Channels you can access:</p>
+            <ul>
+              @for (channel of getUserChannelsInGroup(group); track channel.id) {
+                <li># {{ channel.name }}</li>
               }
-            </div>
+            </ul>
           </div>
         }
-
-        <!-- Groups Created By Admin -->
-        <div class="data-section">
-          <div class="section-header">
-            <h3>My Groups</h3>
-            <button (click)="createNewGroup()" class="btn-create">Create New Group</button>
-          </div>
-
-          @if (getGroupsCreatedByCurrentUser().length > 0) {
-            <div class="groups-grid">
-              @for (group of getGroupsCreatedByCurrentUser(); track group.id) {
-                <div class="group-card">
-                  <div class="group-header">
-                    <h4>{{group.name}}</h4>
-                    <p>{{group.description}}</p>
-                    <span class="group-info">Members: {{group.members.length}}</span>
-                  </div>
-
-                  <!-- Members -->
-                  <div class="group-members">
-                    <h5>Members:</h5>
-                    @for (memberId of group.members; track memberId) {
-                      <div class="member-item">
-                        <span>{{getUsernameById(memberId)}}</span>
-                        @if (memberId !== currentUser?.id) {
-                          <button (click)="removeUserFromGroupAsAdmin(memberId, group.id)" class="btn-delete-small">
-                            Remove
-                          </button>
-                        }
-                      </div>
-                    }
-                  </div>
-
-                  <!-- Channels -->
-                  <div class="group-channels">
-                    <h5>Channels:</h5>
-                    @for (channel of getChannelsForGroup(group.id); track channel.id) {
-                      <div class="channel-item">
-                        <span>{{channel.name}} - {{channel.description}}</span>
-                        <button (click)="deleteChannelAsAdmin(channel.id)" class="btn-delete-small">Delete</button>
-                      </div>
-                    }
-                    <button (click)="createChannelInGroup(group.id)" class="btn-create-small">+ Add Channel</button>
-                  </div>
-
-                  <div class="group-actions">
-                    <button (click)="deleteOwnGroup(group.id)" class="btn-delete">Delete Group</button>
-                  </div>
-                </div>
-              }
-            </div>
-          } @else {
-            <div class="empty-state">
-              <p>You haven't created any groups yet.</p>
-              <button (click)="createNewGroup()" class="btn-create">Create Your First Group</button>
-            </div>
-          }
-        </div>
       </div>
-    }
+    </div>
+  }
 
-    <!-- ========================== -->
-    <!-- Super Admin Functionality -->
-    <!-- ========================== -->
-    @if (isSuperAdmin) {
-      <div class="super-admin-section">
-        <h2>Super Admin Tools</h2>
-
-        <!-- User Management -->
-        <div class="data-section">
-          <h3>User Management</h3>
-          <div class="users-grid">
-            @for (user of users; track user.id) {
-              <div class="user-card">
-                <div class="user-details">
-                  <strong>{{user.username}}</strong>
-                  <span class="user-email">{{user.email}}</span>
-                  <span class="user-roles">Roles: {{user.roles.join(', ')}}</span>
-                  <span class="user-groups">Groups: {{user.groups.length}}</span>
-                </div>
-                @if (user.id !== currentUser?.id) {
-                  <div class="user-actions">
-                    @if (!user.roles.includes('group-admin')) {
-                      <button (click)="promoteToGroupAdmin(user.id)" class="btn-promote">
-                        Promote to Group Admin
-                      </button>
-                    }
-                    @if (!user.roles.includes('super-admin')) {
-                      <button (click)="promoteToSuperAdmin(user.id)" class="btn-promote-super">
-                        Promote to Super Admin
-                      </button>
-                    }
-                    <button (click)="deleteUserAsAdmin(user.id)" class="btn-delete">Delete User</button>
-                  </div>
-                }
-              </div>
-            }
-          </div>
-        </div>
-
-        <!-- All Groups Management -->
-        <div class="data-section">
-          <h3>All Groups Management</h3>
-          <div class="groups-grid">
-            @for (group of groups; track group.id) {
-              <div class="group-card">
-                <div class="group-header">
-                  <h4>{{group.name}}</h4>
-                  <p>{{group.description}}</p>
-                  <span class="group-info">Created by: {{getUsernameById(group.createdBy)}}</span>
-                  <span class="group-info">Admin: {{getUsernameById(group.adminId)}}</span>
-                  <span class="group-info">Members: {{group.members.length}}</span>
-                </div>
-
-                <div class="group-channels">
-                  <h5>Channels ({{getChannelsForGroup(group.id).length}}):</h5>
-                  @for (channel of getChannelsForGroup(group.id); track channel.id) {
-                    <div class="channel-item">
-                      <span>{{channel.name}} - {{channel.description}}</span>
-                      <button (click)="deleteChannelAsAdmin(channel.id)" class="btn-delete-small">Delete</button>
-                    </div>
-                  }
-                  <button (click)="createChannelInGroup(group.id)" class="btn-create-small">+ Add Channel</button>
-                </div>
-
-                <div class="group-actions">
-                  <button (click)="deleteGroupAsAdmin(group.id)" class="btn-delete">Delete Group</button>
-                </div>
-              </div>
-            }
-          </div>
-        </div>
-      </div>
-    }
-
-  </main>
+  <!-- Error/Success Messages -->
+  @if (message) {
+    <div class="message" [ngClass]="messageType">
+      {{ message }}
+    </div>
+  }
 </div>
