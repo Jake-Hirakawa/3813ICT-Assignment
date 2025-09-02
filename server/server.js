@@ -12,13 +12,22 @@ let users = [
   { id: 1, username: "super", email: "super@example.com", roles: ["Super Admin"], groups: [] }
 ];
 
+let groups = [
+  { id: 1, name: "Group 1", description: "This is group 1", members: [1], channels: [1, 2] },
+  { id: 2, name: "Group 2", description: "This is group 2", members: [], channels: [] }
+];
+
+app.get("/api/groups", (req, res) => {
+  res.json({ groups });
+});
+
 app.post("/api/auth/login", (req, res) => {
     const {username, password} = req.body;
     if (username === "super" && password === "123"){
         return res.json({user: users[0]});
     }
     res.status(401).json({ error: "Invalid username/password" });
-})
+});
 
 app.get("/api/users", (req, res) => {
   res.json({ users });

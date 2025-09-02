@@ -1,5 +1,25 @@
 <div class="dashboard-container">
   <header class="dashboard-header">
     <h1>Chat System Dashboard</h1>
+    <button (click)="logout()" class="logout-button">Logout</button>
   </header>
+
+  <div class="dashboard-content">
+    <h2>Groups</h2>
+    <div class="groups-list">
+      <div *ngFor="let group of groups" class="group-item">
+        <div class="group-details">
+          <strong>{{ group.name }}</strong>
+          <p>ID: {{ group.id }}</p>
+          <div class="group-info">
+            <!-- Add more group info here if needed -->
+            Members: {{ group.members?.length || 0 }}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div *ngIf="groups.length === 0" class="empty-message">
+      No groups found.
+    </div>
+  </div>
 </div>

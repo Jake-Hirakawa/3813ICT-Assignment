@@ -1,14 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-
-export interface User {
-  id: number;
-  username: string;
-  email: string;
-  roles: string[];
-  groups: any[];
-}
+import { User } from '../data/model';
 
 export interface LoginResponse {
   user?: User;
@@ -34,6 +27,11 @@ export class ApiService {
   // Get all users
   getUsers(): Observable<{users: User[]}> {
     return this.http.get<{users: User[]}>(`${this.baseUrl}/users`);
+  }
+  
+  // Get all groups
+  getGroups(): Observable<{groups: any[]}> {
+    return this.http.get<{groups: any[]}>(`${this.baseUrl}/groups`);
   }
 
   // Create user

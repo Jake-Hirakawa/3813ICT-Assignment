@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { ApiService, User } from './api.service';
+import { ApiService } from './api.service';
+import { User } from '../data/model';
 
 @Injectable({
   providedIn: 'root'
@@ -37,23 +38,5 @@ export class AuthService {
   // Is user logged in?
   isLoggedIn(): boolean {
     return this.getCurrentUser() !== null;
-  }
-
-  // Role checks
-  hasRole(role: string): boolean {
-    const user = this.getCurrentUser();
-    return user?.roles.includes(role) || false;
-  }
-
-  isSuperAdmin(): boolean {
-    return this.hasRole('Super Admin');
-  }
-
-  isGroupAdmin(): boolean {
-    return this.hasRole('Group Admin');
-  }
-
-  isUser(): boolean {
-    return this.hasRole('User');
   }
 }
