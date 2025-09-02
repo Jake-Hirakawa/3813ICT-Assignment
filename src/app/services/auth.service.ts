@@ -1,80 +1,59 @@
 import { Injectable } from '@angular/core';
-import { DataService } from './data.service';
-import { User, UserRole } from '../data/model';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { ApiService, User } from './api.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private currentUser: User | null = null;
+  constructor(private apiService: ApiService) {}
 
-  constructor(private dataService: DataService) {
-    // Check if user is already logged in (from localStorage)
-    const savedUser = localStorage.getItem('currentUser');
-    if (savedUser) {
-      const userData = JSON.parse(savedUser);
-      // Verify user still exists in data service
-      const user = this.dataService.getUserById(userData.id);
-      if (user) {
-        this.currentUser = user;
-      } else {
-        localStorage.removeItem('currentUser');
-      }
-    }
+  // Login: calls server, saves user if successful
+  login(username: string, password: string): Observable<boolean> {
+    return this.apiService.login(username, password).pipe(
+      map(response => {
+        if (response.user && !response.error) {
+          localStorage.setItem('currentUser', JSON.stringify(response.user));
+          return true;
+        } else {
+          return false;
+        }
+      })
+    );
   }
 
-  login(username: string, password: string): boolean {
-    // Find user with matching credentials
-    const user = this.dataService.getUserByUsername(username);
-
-    if (user && user.password === password) {
-      this.currentUser = user;
-      // Save to localStorage for persistence
-      localStorage.setItem('currentUser', JSON.stringify(user));
-      return true;
-    }
-
-    return false;
-  }
-
+  // Logout: removes user from localStorage
   logout(): void {
-    this.currentUser = null;
     localStorage.removeItem('currentUser');
   }
 
+  // Get current user from localStorage
   getCurrentUser(): User | null {
-    return this.currentUser;
+    const savedUser = localStorage.getItem('currentUser');
+    return savedUser ? JSON.parse(savedUser) : null;
   }
 
+  // Is user logged in?
   isLoggedIn(): boolean {
-    return this.currentUser !== null;
+    return this.getCurrentUser() !== null;
   }
 
-  hasRole(role: UserRole): boolean {
-    return this.currentUser?.roles.includes(role) || false;
+  // Role checks
+  hasRole(role: string): boolean {
+    const user = this.getCurrentUser();
+    return user?.roles.includes(role) || false;
   }
 
   isSuperAdmin(): boolean {
-    return this.hasRole('super-admin');
+    return this.hasRole('Super Admin');
   }
 
   isGroupAdmin(): boolean {
-    return this.hasRole('group-admin') || this.hasRole('super-admin');
+    return this.hasRole('Group Admin');
   }
 
   isUser(): boolean {
-    return this.hasRole('user') || this.hasRole('group-admin') || this.hasRole('super-admin');
-  }
-
-  canManageUser(userId: number): boolean {
-    if (this.isSuperAdmin()) return true;
-    if (this.currentUser?.id === userId) return true;
-    return false;
-  }
-
-  canManageGroup(groupId: number): boolean {
-    if (this.isSuperAdmin()) return true;
-    const group = this.dataService.getGroupById(groupId);
-    return group?.createdBy === this.currentUser?.id;
+    return this.hasRole('User');
   }
 }
