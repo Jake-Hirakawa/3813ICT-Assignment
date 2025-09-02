@@ -11,34 +11,19 @@
       "groups": [
         "g1756813642951404"
       ]
+    },
+    {
+      "id": "u1756815509453331",
+      "username": "jake",
+      "email": "jakehirakawa@outlook.com",
+      "password": "123",
+      "roles": [
+        "User"
+      ],
+      "groups": []
     }
   ],
   "groups": [
-    {
-      "id": "g1756809333282794",
-      "name": "General",
-      "ownerUsername": "super",
-      "admins": [
-        "super"
-      ],
-      "members": [
-        "super"
-      ],
-      "channels": [
-        {
-          "id": "c17568093332824",
-          "name": "general",
-          "members": []
-        },
-        {
-          "id": "c1756813538446434",
-          "name": "new",
-          "members": [
-            "super"
-          ]
-        }
-      ]
-    },
     {
       "id": "g1756813642951404",
       "name": "newgroup",
