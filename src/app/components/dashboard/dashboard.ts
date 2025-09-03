@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { ApiService } from '../../services/api.service';
-import { User, Group, Channel } from '../../model/model';
+import { User, Group, Channel, JoinRequest } from '../../model/model';
 
 @Component({
   selector: 'app-dashboard',
@@ -17,9 +17,10 @@ export class DashboardComponent implements OnInit {
   currentUser: User | null = null;
   users: any[] = [];
   groups: Group[] = [];
+  joinRequests: JoinRequest[] = [];
   
   // Form models
-  newUser = { username: '', email: '', password: '' };
+  newUser = { username: '', email: '', password: '', role: 'User' };
   newGroup = { name: '' };
   
   // Selection models for dropdowns
@@ -46,6 +47,7 @@ export class DashboardComponent implements OnInit {
     
     this.loadUsers();
     this.loadGroups();
+    this.loadJoinRequests();
   }
 
   // Permission checks
@@ -57,10 +59,32 @@ export class DashboardComponent implements OnInit {
     return this.currentUser?.roles?.includes('Group Admin') || false;
   }
 
+  canAdminGroup(group: Group): boolean {
+    if (this.isSuperAdmin()) return true;
+    if (this.isGroupAdmin()) {
+      return group.ownerUsername?.toLowerCase() === this.currentUser?.username.toLowerCase() ||
+             group.admins?.some(admin => admin.toLowerCase() === this.currentUser?.username.toLowerCase());
+    }
+    return false;
+  }
+
   getCurrentUserRole(): string {
     if (this.isSuperAdmin()) return 'Super Admin';
     if (this.isGroupAdmin()) return 'Group Admin';
     return 'User';
+  }
+
+  // User membership checks
+  isUserInGroup(group: Group): boolean {
+    return group.members?.some(member => 
+      member.toLowerCase() === this.currentUser?.username.toLowerCase()
+    ) || false;
+  }
+
+  isUserInChannel(group: Group, channel: Channel): boolean {
+    return channel.members?.some(member =>
+      member.toLowerCase() === this.currentUser?.username.toLowerCase()
+    ) || false;
   }
 
   // Data loading
@@ -86,6 +110,94 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  loadJoinRequests() {
+    this.apiService.getJoinRequests().subscribe({
+      next: (response) => {
+        this.joinRequests = response.joinRequests || [];
+      },
+      error: (error) => {
+        console.log('Failed to load join requests - endpoint might not exist yet');
+        this.joinRequests = [];
+      }
+    });
+  }
+
+  // Base User Actions - Group Management
+  requestJoinGroup(group: Group) {
+    if (!this.currentUser) return;
+    
+    this.apiService.requestJoinGroup(group.id, this.currentUser.username).subscribe({
+      next: () => {
+        this.showMessage(`Join request sent for ${group.name}`, 'success');
+        this.loadJoinRequests();
+      },
+      error: (error) => {
+        this.showMessage(error.error?.error || 'Failed to send join request', 'error');
+      }
+    });
+  }
+
+  joinGroupDirectly(group: Group) {
+    if (!this.currentUser) return;
+    
+    this.apiService.addUserToGroup(group.id, this.currentUser.username).subscribe({
+      next: () => {
+        this.showMessage(`Joined ${group.name} successfully`, 'success');
+        this.loadGroups();
+      },
+      error: (error) => {
+        this.showMessage(error.error?.error || 'Failed to join group', 'error');
+      }
+    });
+  }
+
+  leaveGroup(group: Group) {
+    if (!this.currentUser) return;
+    
+    if (confirm(`Are you sure you want to leave ${group.name}?`)) {
+      this.apiService.removeUserFromGroup(group.id, this.currentUser.username).subscribe({
+        next: () => {
+          this.showMessage(`Left ${group.name} successfully`, 'success');
+          this.loadGroups();
+        },
+        error: (error) => {
+          this.showMessage(error.error?.error || 'Failed to leave group', 'error');
+        }
+      });
+    }
+  }
+
+  // Base User Actions - Channel Management
+  joinChannel(group: Group, channel: Channel) {
+    if (!this.currentUser) return;
+    
+    this.apiService.addUserToChannel(group.id, channel.id, this.currentUser.username).subscribe({
+      next: () => {
+        this.showMessage(`Joined #${channel.name} successfully`, 'success');
+        this.loadGroups();
+      },
+      error: (error) => {
+        this.showMessage(error.error?.error || 'Failed to join channel', 'error');
+      }
+    });
+  }
+
+  leaveChannel(group: Group, channel: Channel) {
+    if (!this.currentUser) return;
+    
+    if (confirm(`Leave channel #${channel.name}?`)) {
+      this.apiService.removeUserFromChannel(group.id, channel.id, this.currentUser.username).subscribe({
+        next: () => {
+          this.showMessage(`Left #${channel.name} successfully`, 'success');
+          this.loadGroups();
+        },
+        error: (error) => {
+          this.showMessage(error.error?.error || 'Failed to leave channel', 'error');
+        }
+      });
+    }
+  }
+
   // User management
   createUser() {
     if (!this.newUser.username.trim() || !this.newUser.email.trim()) {
@@ -93,11 +205,18 @@ export class DashboardComponent implements OnInit {
       return;
     }
 
-    this.apiService.addUser(this.newUser).subscribe({
+    const userPayload = {
+      username: this.newUser.username,
+      email: this.newUser.email,
+      password: this.newUser.password,
+      role: this.newUser.role
+    };
+
+    this.apiService.addUser(userPayload).subscribe({
       next: (response) => {
         this.showMessage('User created successfully', 'success');
         this.loadUsers();
-        this.newUser = { username: '', email: '', password: '' };
+        this.newUser = { username: '', email: '', password: '', role: 'User' };
       },
       error: (error) => {
         this.showMessage(error.error?.error || 'Failed to create user', 'error');
@@ -111,10 +230,27 @@ export class DashboardComponent implements OnInit {
         next: () => {
           this.showMessage('User deleted successfully', 'success');
           this.loadUsers();
-          this.loadGroups(); // Refresh groups as user might have been removed from them
+          this.loadGroups();
         },
         error: (error) => {
           this.showMessage(error.error?.error || 'Failed to delete user', 'error');
+        }
+      });
+    }
+  }
+
+  deleteOwnAccount() {
+    if (!this.currentUser) return;
+    
+    if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+      this.apiService.deleteUser(this.currentUser.id).subscribe({
+        next: () => {
+          this.showMessage('Account deleted successfully', 'success');
+          this.authService.logout();
+          this.router.navigate(['/login']);
+        },
+        error: (error) => {
+          this.showMessage(error.error?.error || 'Failed to delete account', 'error');
         }
       });
     }
@@ -156,6 +292,53 @@ export class DashboardComponent implements OnInit {
         }
       });
     }
+  }
+
+  // Promote user to group admin for this specific group
+  promoteToGroupAdmin(group: Group, username: string) {
+    if (!this.canAdminGroup(group)) {
+      this.showMessage('You can only promote users in groups you created', 'error');
+      return;
+    }
+
+    if (confirm(`Promote ${username} to admin of ${group.name}?`)) {
+      this.apiService.promoteToGroupAdmin(group.id, username).subscribe({
+        next: () => {
+          this.showMessage(`${username} promoted to group admin successfully`, 'success');
+          this.loadGroups();
+        },
+        error: (error) => {
+          this.showMessage(error.error?.error || 'Failed to promote user', 'error');
+        }
+      });
+    }
+  }
+
+  // Demote user from group admin for this specific group  
+  demoteFromGroupAdmin(group: Group, username: string) {
+    if (!this.canAdminGroup(group)) {
+      this.showMessage('You can only demote users in groups you created', 'error');
+      return;
+    }
+
+    if (confirm(`Remove ${username} as admin of ${group.name}?`)) {
+      this.apiService.demoteFromGroupAdmin(group.id, username).subscribe({
+        next: () => {
+          this.showMessage(`${username} removed as group admin successfully`, 'success');
+          this.loadGroups();
+        },
+        error: (error) => {
+          this.showMessage(error.error?.error || 'Failed to demote user', 'error');
+        }
+      });
+    }
+  }
+
+  // Check if user is admin of this specific group
+  isUserAdminOfGroup(group: Group, username: string): boolean {
+    return group.admins?.some(admin => 
+      admin.toLowerCase() === username.toLowerCase()
+    ) || false;
   }
 
   addUserToGroup(group: Group, username: string) {
@@ -217,33 +400,66 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-  addUserToChannel(group: Group, channel: Channel, username: string) {
-    if (!username) return;
+  // Join Request Management
+  getPendingRequestsForGroup(group: Group): JoinRequest[] {
+    return this.joinRequests.filter(req => 
+      req.gid === group.id && req.status === 'pending'
+    );
+  }
 
-    this.apiService.addUserToChannel(group.id, channel.id, username).subscribe({
+  approveJoinRequest(request: JoinRequest) {
+    this.apiService.approveJoinRequest(request.id).subscribe({
       next: () => {
-        this.showMessage('User added to channel successfully', 'success');
+        this.showMessage('Join request approved', 'success');
+        this.loadJoinRequests();
         this.loadGroups();
-        this.selectedUserForChannel[group.id + '_' + channel.id] = '';
       },
       error: (error) => {
-        this.showMessage(error.error?.error || 'Failed to add user to channel', 'error');
+        this.showMessage(error.error?.error || 'Failed to approve request', 'error');
       }
     });
   }
 
-  removeUserFromChannel(group: Group, channel: Channel, username: string) {
-    if (confirm(`Remove ${username} from #${channel.name}?`)) {
-      this.apiService.removeUserFromChannel(group.id, channel.id, username).subscribe({
+  rejectJoinRequest(request: JoinRequest) {
+    this.apiService.rejectJoinRequest(request.id).subscribe({
+      next: () => {
+        this.showMessage('Join request rejected', 'success');
+        this.loadJoinRequests();
+      },
+      error: (error) => {
+        this.showMessage(error.error?.error || 'Failed to reject request', 'error');
+      }
+    });
+  }
+
+    // Promote user to Super Admin (only functionality needed)
+  promoteToSuperAdmin(user: any) {
+    if (!this.isSuperAdmin()) {
+      this.showMessage('Only Super Admins can promote users', 'error');
+      return;
+    }
+
+    if (user.roles?.includes('Super Admin')) {
+      this.showMessage('User is already a Super Admin', 'error');
+      return;
+    }
+
+    if (confirm(`Promote ${user.username} to Super Admin? This will give them full system access.`)) {
+      this.apiService.promoteToSuperAdmin(user.id).subscribe({
         next: () => {
-          this.showMessage('User removed from channel successfully', 'success');
-          this.loadGroups();
+          this.showMessage(`${user.username} promoted to Super Admin successfully`, 'success');
+          this.loadUsers();
         },
         error: (error) => {
-          this.showMessage(error.error?.error || 'Failed to remove user from channel', 'error');
+          this.showMessage(error.error?.error || 'Failed to promote user to Super Admin', 'error');
         }
       });
     }
+  }
+
+  // Helper method to check if promotion is available
+  canPromoteToSuperAdmin(user: any): boolean {
+    return this.isSuperAdmin() && !user.roles?.includes('Super Admin');
   }
 
   // Helper methods for dropdowns
@@ -259,25 +475,6 @@ export class DashboardComponent implements OnInit {
     return group.members?.filter(member => 
       !channel.members?.some(channelMember => 
         channelMember.toLowerCase() === member.toLowerCase()
-      )
-    ) || [];
-  }
-
-  // Regular user functionality
-  getUserGroups(): Group[] {
-    if (!this.currentUser) return [];
-    return this.groups.filter(group => 
-      group.members?.some(member => 
-        member.toLowerCase() === this.currentUser!.username.toLowerCase()
-      )
-    );
-  }
-
-  getUserChannelsInGroup(group: Group): Channel[] {
-    if (!this.currentUser) return [];
-    return group.channels?.filter(channel =>
-      channel.members?.some(member =>
-        member.toLowerCase() === this.currentUser!.username.toLowerCase()
       )
     ) || [];
   }

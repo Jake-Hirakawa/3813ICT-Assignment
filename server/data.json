@@ -9,7 +9,8 @@
         "Super Admin"
       ],
       "groups": [
-        "g1756813642951404"
+        "g1756813642951404",
+        "g1756880560169737"
       ]
     },
     {
@@ -18,9 +19,25 @@
       "email": "jakehirakawa@outlook.com",
       "password": "123",
       "roles": [
+        "Group Admin"
+      ],
+      "groups": [
+        "g1756813642951404",
+        "g1756880560169737"
+      ]
+    },
+    {
+      "id": "u1756877092866388",
+      "username": "user",
+      "email": "1",
+      "password": "1",
+      "roles": [
         "User"
       ],
-      "groups": []
+      "groups": [
+        "g1756813642951404",
+        "g1756880560169737"
+      ]
     }
   ],
   "groups": [
@@ -29,13 +46,53 @@
       "name": "newgroup",
       "ownerUsername": "super",
       "admins": [
-        "super"
+        "super",
+        "jake"
       ],
       "members": [
+        "super",
+        "jake",
+        "user"
+      ],
+      "channels": [
+        {
+          "id": "c1756875666371776",
+          "name": "test",
+          "members": [
+            "user"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "g1756880560169737",
+      "name": "newgroup",
+      "ownerUsername": "jake",
+      "admins": [
+        "jake"
+      ],
+      "members": [
+        "jake",
+        "user",
         "super"
       ],
       "channels": []
     }
   ],
-  "joinRequests": []
+  "joinRequests": [
+    {
+      "id": "r1756878574491768",
+      "gid": "g1756813642951404",
+      "username": "user",
+      "status": "approved",
+      "createdAt": 1756878574491
+    },
+    {
+      "id": "r1756880060091575",
+      "gid": "g1756813642951404",
+      "username": "user",
+      "status": "approved",
+      "createdAt": 1756880060091
+    }
+  ]
 }

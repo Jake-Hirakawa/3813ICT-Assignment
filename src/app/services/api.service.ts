@@ -17,7 +17,7 @@ export class ApiService {
     return this.http.get<{ users: any[] }>(`${this.base}/users`);
   }
 
-  addUser(payload: { username: string; email: string; password?: string }) {
+  addUser(payload: { username: string; email: string; password?: string; role?: string }) {
     return this.http.post<{ user: any }>(`${this.base}/users`, payload);
   }
 
@@ -46,6 +46,14 @@ export class ApiService {
     return this.http.delete<{ message: string }>(`${this.base}/groups/${groupId}/members/${username}`);
   }
 
+  promoteToGroupAdmin(groupId: string, username: string) {
+    return this.http.post<{ message: string }>(`${this.base}/groups/${groupId}/admins`, { username });
+  }
+
+  demoteFromGroupAdmin(groupId: string, username: string) {
+    return this.http.delete<{ message: string }>(`${this.base}/groups/${groupId}/admins/${username}`);
+  }
+
   // Channels
   addChannelToGroup(groupId: string, channelName: string) {
     return this.http.post<{ channel: any }>(`${this.base}/groups/${groupId}/channels`, { name: channelName });
@@ -61,5 +69,27 @@ export class ApiService {
 
   removeUserFromChannel(groupId: string, channelId: string, username: string) {
     return this.http.delete<{ message: string }>(`${this.base}/groups/${groupId}/channels/${channelId}/members/${username}`);
+  }
+
+  // Join Requests
+  getJoinRequests() {
+    return this.http.get<{ joinRequests: any[] }>(`${this.base}/join-requests`);
+  }
+
+  requestJoinGroup(groupId: string, username: string) {
+    return this.http.post<{ request: any }>(`${this.base}/groups/${groupId}/requests`, { username });
+  }
+
+  approveJoinRequest(requestId: string) {
+    return this.http.post<{ message: string }>(`${this.base}/join-requests/${requestId}/approve`, {});
+  }
+
+  rejectJoinRequest(requestId: string) {
+    return this.http.post<{ message: string }>(`${this.base}/join-requests/${requestId}/reject`, {});
+  }
+
+  // Promote user to Super Admin
+  promoteToSuperAdmin(userId: string) {
+    return this.http.post<{ message: string }>(`${this.base}/users/${userId}/promote-super-admin`, {});
   }
 }
