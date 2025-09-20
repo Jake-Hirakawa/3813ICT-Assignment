@@ -22,6 +22,14 @@ export interface Channel {
   members: string[];
 }
 
+export interface Message {
+  id: string;
+  channelId: string;
+  username: string;
+  content: string;
+  timestamp: number;
+}
+
 export interface JoinRequest {
   id: string;
   gid: string;

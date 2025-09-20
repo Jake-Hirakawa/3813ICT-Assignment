@@ -2,21 +2,36 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const http = require('http');
+const { Server } = require('socket.io');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+const PORT = 3000;
+
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:4200",
+    methods: ["GET", "POST"]
+  }
+});
+require('./socket')(io);
+
+server.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
 
 const DATA_FILE = path.join(__dirname, 'data.json');
 let users = [];
 let groups = [];
 let joinRequests = [];
+let messages = [];
 
 // --- Persistence helpers ---
 function saveData() {
   try {
     const tmp = DATA_FILE + '.tmp';
-    fs.writeFileSync(tmp, JSON.stringify({ users, groups, joinRequests }, null, 2), 'utf8');
+    fs.writeFileSync(tmp, JSON.stringify({ users, groups, joinRequests, messages }, null, 2), 'utf8');
     fs.renameSync(tmp, DATA_FILE);
   } catch (err) {
     console.error('Failed to save data file', err);
@@ -31,6 +46,7 @@ function loadData() {
       if (Array.isArray(parsed.users)) users = parsed.users;
       if (Array.isArray(parsed.groups)) groups = parsed.groups;
       if (Array.isArray(parsed.joinRequests)) joinRequests = parsed.joinRequests;
+      if (Array.isArray(parsed.messages)) messages = parsed.messages;
       // Defensive normalization
       users = (users || []).map(u => ({
         ...u,
@@ -90,11 +106,6 @@ app.post('/api/auth/login', (req, res) => {
   if (!user) return res.status(401).json({ error: 'Invalid username/password' });
 
   if (user.password && user.password === password) {
-    const { password: _omit, ...userWithoutPassword } = user;
-    return res.json({ user: userWithoutPassword });
-  }
-  // Backwards compatibility: default super password
-  if (user.username === 'super' && password === '123') {
     const { password: _omit, ...userWithoutPassword } = user;
     return res.json({ user: userWithoutPassword });
   }
@@ -233,6 +244,17 @@ app.delete('/api/groups/:id/admins/:username', (req, res) => {
 });
 
 // --- GROUPS ---
+// Get specific group
+app.get('/api/groups/:id', (req, res) => {
+  const {id} = req.params;
+
+  const group = getGroupById(id);
+  if(!group){
+    return res.status(404).json({error: 'Group not found'});
+  }
+  res.json({group});
+})
+
 app.get('/api/groups', (req, res) => res.json({ groups }));
 
 app.post('/api/groups', (req, res) => {
@@ -499,6 +521,3 @@ app.post('/api/join-requests/:id/reject', (req, res) => {
   saveData();
   res.json({ message: 'Join request rejected' });
 });
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));

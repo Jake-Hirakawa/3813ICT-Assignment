@@ -9,8 +9,8 @@
         "Super Admin"
       ],
       "groups": [
-        "g1756813642951404",
-        "g1756880560169737"
+        "g1758363431456487",
+        "g1758363706067696"
       ]
     },
     {
@@ -22,28 +22,52 @@
         "Group Admin"
       ],
       "groups": [
-        "g1756813642951404",
-        "g1756880560169737"
+        "g17569074633764",
+        "g1758363431456487",
+        "g1758363706067696"
       ]
     },
     {
-      "id": "u1756877092866388",
-      "username": "user",
-      "email": "1",
-      "password": "1",
+      "id": "u1758363328634464",
+      "username": "Scarlett",
+      "email": "S@F.com",
+      "password": "123",
       "roles": [
         "User"
       ],
       "groups": [
-        "g1756813642951404",
-        "g1756880560169737"
+        "g1758363706067696"
+      ]
+    },
+    {
+      "id": "u1758363346548356",
+      "username": "Michael",
+      "email": "M@C.com",
+      "password": "123",
+      "roles": [
+        "User"
+      ],
+      "groups": [
+        "g1758363706067696"
+      ]
+    },
+    {
+      "id": "u1758363364469373",
+      "username": "Noah",
+      "email": "N@R.com",
+      "password": "123",
+      "roles": [
+        "User"
+      ],
+      "groups": [
+        "g1758363431456487"
       ]
     }
   ],
   "groups": [
     {
-      "id": "g1756813642951404",
-      "name": "newgroup",
+      "id": "g1758363431456487",
+      "name": "NRL Chat",
       "ownerUsername": "super",
       "admins": [
         "super",
@@ -52,47 +76,45 @@
       "members": [
         "super",
         "jake",
-        "user"
+        "Noah"
       ],
       "channels": [
         {
-          "id": "c1756875666371776",
-          "name": "test",
+          "id": "c1758363618347880",
+          "name": "Finals",
           "members": [
-            "user"
+            "jake",
+            "Noah"
           ]
         }
       ]
     },
     {
-      "id": "g1756880560169737",
-      "name": "newgroup",
-      "ownerUsername": "jake",
+      "id": "g1758363706067696",
+      "name": "Aldi",
+      "ownerUsername": "super",
       "admins": [
-        "jake"
+        "super",
+        "Michael"
       ],
       "members": [
-        "jake",
-        "user",
-        "super"
+        "super",
+        "Scarlett",
+        "Michael",
+        "jake"
       ],
-      "channels": []
+      "channels": [
+        {
+          "id": "c1758363727909207",
+          "name": "Team Building",
+          "members": [
+            "Michael",
+            "Scarlett"
+          ]
+        }
+      ]
     }
   ],
-  "joinRequests": [
-    {
-      "id": "r1756878574491768",
-      "gid": "g1756813642951404",
-      "username": "user",
-      "status": "approved",
-      "createdAt": 1756878574491
-    },
-    {
-      "id": "r1756880060091575",
-      "gid": "g1756813642951404",
-      "username": "user",
-      "status": "approved",
-      "createdAt": 1756880060091
-    }
-  ]
+  "joinRequests": [],
+  "messages": []
 }

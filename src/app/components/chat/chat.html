@@ -1,0 +1,51 @@
+<!-- src/app/components/chat/chat.html -->
+<div class="chat-container">
+  <!-- Header -->
+  <div class="chat-header">
+    @if (group && channel) {
+      <h2>{{ group.name }} - # {{ channel.name }}</h2>
+    } @else {
+      <h2>Loading chat...</h2>
+    }
+    <button (click)="goBackToDashboard()" class="back-btn">
+    Back to Dashboard
+    </button>
+  </div>
+
+  <!-- Messages Area -->
+  <div class="messages-area">
+    @if (messages.length === 0) {
+      <p class="no-messages">No messages yet. Start the conversation!</p>
+    } @else {
+      @for (message of messages; track message.id) {
+        <div class="message" [class.own-message]="message.username === currentUser?.username">
+          <div class="message-header">
+            <strong>{{ message.username }}</strong>
+            <span class="timestamp">{{ message.timestamp | date:'short' }}</span>
+          </div>
+          <div class="message-content">
+            {{ message.content }}
+          </div>
+        </div>
+      }
+    }
+  </div>
+
+  <!-- Message Input -->
+  <div class="message-input-area">
+    <div class="input-group">
+      <input 
+        type="text" 
+        [(ngModel)]="newMessageContent"
+        (keyup.enter)="sendMessage()"
+        placeholder="Type your message..."
+        class="message-input">
+      <button 
+        (click)="sendMessage()" 
+        [disabled]="!newMessageContent.trim()"
+        class="send-btn">
+        Send
+      </button>
+    </div>
+  </div>
+</div>

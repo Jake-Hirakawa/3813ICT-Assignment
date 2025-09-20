@@ -8,31 +8,97 @@
     </div>
   </div>
 
+  
+  <!-- User Management (Super Admin) -->
+  @if (isSuperAdmin()) {
+    <section class="section">
+      <h2>Create User</h2>
+      <!-- Create User -->
+      <form (ngSubmit)="createUser()" class="form-row">
+        <input [(ngModel)]="newUser.username" name="username" placeholder="Username" required class="input">
+        <input [(ngModel)]="newUser.email" name="email" type="email" placeholder="Email" required class="input">
+        <input [(ngModel)]="newUser.password" name="password" type="password" placeholder="Password" class="input">
+        <select [(ngModel)]="newUser.role" name="role" class="input">
+          <option value="User">User</option>
+          <option value="Group Admin">Group Admin</option>
+          <option value="Super Admin">Super Admin</option>
+        </select>
+        <button type="submit" class="btn btn-primary">Create User</button>
+      </form>
+
+      <h2>User Management</h2>
+      <!-- Users List -->
+      <div class="users-grid">
+        @for (user of users; track user.id) {
+          <div class="user-card">
+            <div class="user-info">
+              <strong>{{ user.username }}</strong><br>
+              <small>{{ user.email }}</small><br>
+              <span class="user-roles">{{ user.roles?.join(', ') }}</span>
+            </div>
+            
+            @if (user.username !== 'super' && user.id !== currentUser?.id) {
+              <div class="user-actions">
+                <!-- Only show promote button if user is not already Super Admin -->
+                @if (canPromoteToSuperAdmin(user)) {
+                  <button (click)="promoteToSuperAdmin(user)" 
+                          class="btn btn-sm btn-primary">
+                    Make Super Admin
+                  </button>
+                }
+                
+                <!-- Delete Button -->
+                <button (click)="deleteUser(user)" 
+                        class="btn btn-sm btn-danger">
+                  Delete
+                </button>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </section>
+  }
+
+
+  <!-- Group Creation (Admins) -->
+  @if (isGroupAdmin() || isSuperAdmin()) {
+    <section class="section">
+      <h2>Create Group</h2>
+      <form (ngSubmit)="createGroup()" class="form-row">
+        <input [(ngModel)]="newGroup.name" name="groupName" placeholder="Group name" required class="input">
+        <button type="submit" class="btn btn-primary">Create Group</button>
+      </form>
+    </section>
+  }
+
   <!-- All Groups Section -->
   <section class="section">
     <h2>All Groups</h2>
     
-    @for (group of groups; track group.id) {
-      <div class="card">
-        <!-- Group Header -->
-        <div class="card-header">
-          <h3>{{ group.name }}</h3>
-          <div class="actions">
-            @if (isUserInGroup(group)) {
-              <button (click)="leaveGroup(group)" class="btn btn-warning">Leave</button>
+@for (group of groups; track group.id) {
+  <div class="card">
+    <div class="card-header">
+      <h3>{{ group.name }}</h3>
+      <div class="actions">
+        @if (isUserInGroup(group)) {
+          <button (click)="leaveGroup(group)" class="btn btn-warning">Leave</button>
+        } @else {
+          @if (isSuperAdmin()) {
+            <button (click)="joinGroupDirectly(group)" class="btn btn-primary">Join</button>
+          } @else {
+            @if (!isUserPendingForGroup(group)) {
+              <button (click)="requestJoinGroup(group)" class="btn btn-secondary">Request Join</button>
             } @else {
-              @if (isSuperAdmin()) {
-                <button (click)="joinGroupDirectly(group)" class="btn btn-primary">Join</button>
-              } @else {
-                <button (click)="requestJoinGroup(group)" class="btn btn-secondary">Request Join</button>
-              }
+              <span class="tag">Pending</span>
             }
-            
-            @if (canAdminGroup(group)) {
-              <button (click)="deleteGroup(group)" class="btn btn-danger">Delete Group</button>
-            }
-          </div>
-        </div>
+          }
+        }
+        @if (canAdminGroup(group)) {
+          <button (click)="deleteGroup(group)" class="btn btn-danger">Delete Group</button>
+        }
+      </div>
+    </div>
 
         <!-- Group Info -->
         <div class="group-info">
@@ -49,8 +115,9 @@
             @for (channel of group.channels; track channel.id) {
               <div class="channel">
                 <span><strong># {{ channel.name }}</strong> ({{ channel.members.length || 0 }} members)</span>
-                <div class="actions">
+                <div class="actions">          
                   @if (isUserInChannel(group, channel)) {
+                    <button (click)="navigateToChat(group, channel)" class="btn btn-primary btn-sm">Chat</button>
                     <button (click)="leaveChannel(group, channel)" class="btn btn-sm btn-warning">Leave</button>
                   } @else {
                     <button (click)="joinChannel(group, channel)" class="btn btn-sm btn-primary">Join</button>
@@ -107,7 +174,7 @@
                 }
               </div>
               
-              <!-- Add User to Group (existing functionality) -->
+              <!-- Add User to Group -->
               <div class="add-member-form">
                 <select [(ngModel)]="selectedUserForGroup[group.id]" class="form-select">
                   <option value="">Select user to add...</option>
@@ -146,68 +213,6 @@
       </div>
     }
   </section>
-
-  <!-- Group Creation (Admins) -->
-  @if (isGroupAdmin() || isSuperAdmin()) {
-    <section class="section">
-      <h2>Create Group</h2>
-      <form (ngSubmit)="createGroup()" class="form-row">
-        <input [(ngModel)]="newGroup.name" name="groupName" placeholder="Group name" required class="input">
-        <button type="submit" class="btn btn-primary">Create Group</button>
-      </form>
-    </section>
-  }
-
-  <!-- User Management (Super Admin) -->
-  @if (isSuperAdmin()) {
-    <section class="section">
-      <h2>User Management</h2>
-      
-      <!-- Create User -->
-      <form (ngSubmit)="createUser()" class="form-row">
-        <input [(ngModel)]="newUser.username" name="username" placeholder="Username" required class="input">
-        <input [(ngModel)]="newUser.email" name="email" type="email" placeholder="Email" required class="input">
-        <input [(ngModel)]="newUser.password" name="password" type="password" placeholder="Password" class="input">
-        <select [(ngModel)]="newUser.role" name="role" class="input">
-          <option value="User">User</option>
-          <option value="Group Admin">Group Admin</option>
-          <option value="Super Admin">Super Admin</option>
-        </select>
-        <button type="submit" class="btn btn-primary">Create User</button>
-      </form>
-
-      <!-- Users List -->
-      <div class="users-grid">
-        @for (user of users; track user.id) {
-          <div class="user-card">
-            <div class="user-info">
-              <strong>{{ user.username }}</strong><br>
-              <small>{{ user.email }}</small><br>
-              <span class="user-roles">{{ user.roles?.join(', ') }}</span>
-            </div>
-            
-            @if (user.username !== 'super' && user.id !== currentUser?.id) {
-              <div class="user-actions">
-                <!-- Only show promote button if user is not already Super Admin -->
-                @if (canPromoteToSuperAdmin(user)) {
-                  <button (click)="promoteToSuperAdmin(user)" 
-                          class="btn btn-sm btn-primary">
-                    Make Super Admin
-                  </button>
-                }
-                
-                <!-- Delete Button -->
-                <button (click)="deleteUser(user)" 
-                        class="btn btn-sm btn-danger">
-                  Delete
-                </button>
-              </div>
-            }
-          </div>
-        }
-      </div>
-    </section>
-  }
 
   <!-- Account Management -->
   <section class="section">

@@ -44,10 +44,44 @@ export class DashboardComponent implements OnInit {
       this.router.navigate(['/login']);
       return;
     }
-    
     this.loadUsers();
     this.loadGroups();
     this.loadJoinRequests();
+  }
+
+  // Data loading
+  loadUsers() {
+    this.apiService.getUsers().subscribe({
+      next: (response) => {
+        this.users = response.users;
+      },
+      error: (error) => {
+        this.showMessage('Failed to load users', 'error');
+      }
+    });
+  }
+
+  loadGroups() {
+    this.apiService.getGroups().subscribe({
+      next: (response) => {
+        this.groups = response.groups;
+      },
+      error: (error) => {
+        this.showMessage('Failed to load groups', 'error');
+      }
+    });
+  }
+
+  loadJoinRequests() {
+    this.apiService.getJoinRequests().subscribe({
+      next: (response) => {
+        this.joinRequests = response.joinRequests || [];
+      },
+      error: (error) => {
+        console.log('Failed to load join requests - endpoint might not exist yet');
+        this.joinRequests = [];
+      }
+    });
   }
 
   // Permission checks
@@ -85,41 +119,6 @@ export class DashboardComponent implements OnInit {
     return channel.members?.some(member =>
       member.toLowerCase() === this.currentUser?.username.toLowerCase()
     ) || false;
-  }
-
-  // Data loading
-  loadUsers() {
-    this.apiService.getUsers().subscribe({
-      next: (response) => {
-        this.users = response.users;
-      },
-      error: (error) => {
-        this.showMessage('Failed to load users', 'error');
-      }
-    });
-  }
-
-  loadGroups() {
-    this.apiService.getGroups().subscribe({
-      next: (response) => {
-        this.groups = response.groups;
-      },
-      error: (error) => {
-        this.showMessage('Failed to load groups', 'error');
-      }
-    });
-  }
-
-  loadJoinRequests() {
-    this.apiService.getJoinRequests().subscribe({
-      next: (response) => {
-        this.joinRequests = response.joinRequests || [];
-      },
-      error: (error) => {
-        console.log('Failed to load join requests - endpoint might not exist yet');
-        this.joinRequests = [];
-      }
-    });
   }
 
   // Base User Actions - Group Management
@@ -196,6 +195,10 @@ export class DashboardComponent implements OnInit {
         }
       });
     }
+  }
+
+  navigateToChat(group: Group, channel: Channel) {
+    this.router.navigate(['/chat', group.id, channel.id]);
   }
 
   // User management
@@ -294,6 +297,35 @@ export class DashboardComponent implements OnInit {
     }
   }
 
+  addUserToGroup(group: Group, username: string) {
+    if (!username) return;
+
+    this.apiService.addUserToGroup(group.id, username).subscribe({
+      next: () => {
+        this.showMessage('User added to group successfully', 'success');
+        this.loadGroups();
+        this.selectedUserForGroup[group.id] = '';
+      },
+      error: (error) => {
+        this.showMessage(error.error?.error || 'Failed to add user to group', 'error');
+      }
+    });
+  }
+
+  removeUserFromGroup(group: Group, username: string) {
+    if (confirm(`Remove ${username} from ${group.name}?`)) {
+      this.apiService.removeUserFromGroup(group.id, username).subscribe({
+        next: () => {
+          this.showMessage('User removed from group successfully', 'success');
+          this.loadGroups();
+        },
+        error: (error) => {
+          this.showMessage(error.error?.error || 'Failed to remove user from group', 'error');
+        }
+      });
+    }
+  }
+
   // Promote user to group admin for this specific group
   promoteToGroupAdmin(group: Group, username: string) {
     if (!this.canAdminGroup(group)) {
@@ -341,34 +373,6 @@ export class DashboardComponent implements OnInit {
     ) || false;
   }
 
-  addUserToGroup(group: Group, username: string) {
-    if (!username) return;
-
-    this.apiService.addUserToGroup(group.id, username).subscribe({
-      next: () => {
-        this.showMessage('User added to group successfully', 'success');
-        this.loadGroups();
-        this.selectedUserForGroup[group.id] = '';
-      },
-      error: (error) => {
-        this.showMessage(error.error?.error || 'Failed to add user to group', 'error');
-      }
-    });
-  }
-
-  removeUserFromGroup(group: Group, username: string) {
-    if (confirm(`Remove ${username} from ${group.name}?`)) {
-      this.apiService.removeUserFromGroup(group.id, username).subscribe({
-        next: () => {
-          this.showMessage('User removed from group successfully', 'success');
-          this.loadGroups();
-        },
-        error: (error) => {
-          this.showMessage(error.error?.error || 'Failed to remove user from group', 'error');
-        }
-      });
-    }
-  }
 
   // Channel management
   addChannelToGroup(group: Group, channelName: string) {
@@ -401,6 +405,15 @@ export class DashboardComponent implements OnInit {
   }
 
   // Join Request Management
+  isUserPendingForGroup(group: Group): boolean {
+    return this.joinRequests.some(
+      req =>
+        req.gid === group.id &&
+        req.username.toLowerCase() === this.currentUser?.username.toLowerCase() &&
+        req.status === 'pending'
+    );
+  }
+
   getPendingRequestsForGroup(group: Group): JoinRequest[] {
     return this.joinRequests.filter(req => 
       req.gid === group.id && req.status === 'pending'

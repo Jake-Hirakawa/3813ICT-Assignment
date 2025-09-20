@@ -17,7 +17,7 @@ export class ApiService {
     return this.http.get<{ users: any[] }>(`${this.base}/users`);
   }
 
-  addUser(payload: { username: string; email: string; password?: string; role?: string }) {
+  addUser(payload: { username: string; email: string; password: string; role: string }) {
     return this.http.post<{ user: any }>(`${this.base}/users`, payload);
   }
 
@@ -26,6 +26,10 @@ export class ApiService {
   }
 
   // Groups
+  getGroup(groupId: string) {
+    return this.http.get< {group: any }>(`${this.base}/groups/${groupId}`)
+  }
+
   getGroups() {
     return this.http.get<{ groups: any[] }>(`${this.base}/groups`);
   }
