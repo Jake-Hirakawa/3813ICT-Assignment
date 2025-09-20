@@ -45,6 +45,7 @@ export class Chat implements OnInit, OnDestroy {
 
     if (this.groupId){
       this.loadGroupDetails();
+      this.loadRecentMessages();
       this.setupSocket();
     }
   }
@@ -61,6 +62,21 @@ export class Chat implements OnInit, OnDestroy {
     });
   }
 
+  loadRecentMessages(): void {
+  if (this.groupId && this.channelId) {
+    this.apiService.getChannelMessages(this.groupId, this.channelId, 20).subscribe({
+      next: (response) => {
+        this.messages = response.messages;
+        console.log(`Loaded ${this.messages.length} previous messages`);
+      },
+      error: (error) => {
+        console.error('Failed to load messages:', error);
+        this.messages = []; // Start with empty if load fails
+      }
+    });
+  }
+}
+
  setupSocket(): void {
   this.socketService.connect();
 
@@ -71,7 +87,10 @@ export class Chat implements OnInit, OnDestroy {
 
   // Listen for messages
   this.socketService.onNewMessage().subscribe(message => {
-    this.messages.push(message);
+    // Check if message already exists (to avoid duplicates)
+    if (!this.messages.find(m => m.id === message.id)) {
+      this.messages.push(message);
+    }
   });
 
   // Listen for user joined

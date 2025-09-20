@@ -17,7 +17,6 @@ const io = new Server(server, {
     methods: ["GET", "POST"]
   }
 });
-require('./socket')(io);
 
 server.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
 
@@ -98,6 +97,8 @@ const attachGroupToUser = (username, gid) => {
 
 // --- Load persisted data ---
 loadData();
+
+require('./socket')(io, { genId, messages, saveData });
 
 // --- AUTH ---
 app.post('/api/auth/login', (req, res) => {
@@ -349,6 +350,8 @@ app.delete('/api/groups/:id/members/:username', (req, res) => {
   res.json({ message: 'User removed from group successfully' });
 });
 
+// --- CHANNELS ---
+
 // Add channel to group
 app.post('/api/groups/:id/channels', (req, res) => {
   const { id } = req.params;
@@ -437,6 +440,21 @@ app.delete('/api/groups/:groupId/channels/:channelId/members/:username', (req, r
   res.json({ message: 'User removed from channel successfully' });
 });
 
+// Get recent messages
+app.get('/api/groups/:groupId/channels/:channelId/messages', (req, res) => {
+  const { channelId } = req.params;
+  const limit = parseInt(req.query.limit) || 20;
+  
+  // Filter messages for this channel and get the most recent ones
+  const channelMessages = messages
+    .filter(m => m.channelId === channelId)
+    .sort((a, b) => b.timestamp - a.timestamp)  // Sort newest first
+    .slice(0, limit)                            // Take first 'limit' messages
+    .reverse();                                 // Reverse to show oldest first
+  
+  res.json({ messages: channelMessages });
+});
+
 // --- Join Requests ---
 app.post('/api/groups/:gid/requests', (req, res) => {
   const { gid } = req.params;
@@ -459,7 +477,7 @@ app.post('/api/groups/:gid/requests', (req, res) => {
   return res.status(201).json({ request: reqObj });
 });
 
-// --- Join Requests Management (add these after your existing join request endpoint) ---
+// --- Join Requests Management ---
 
 // Get all join requests - for loading join requests in dashboard
 app.get('/api/join-requests', (req, res) => {

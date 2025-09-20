@@ -1,5 +1,5 @@
 // server/sockets.js
-module.exports = function(io) {
+module.exports = function(io, { genId, messages, saveData }) {
   io.on('connection', (socket) => {
     console.log(`Client connected: ${socket.id}`);
 
@@ -19,8 +19,13 @@ module.exports = function(io) {
 
     // Receive message and broadcast to channel
     socket.on('send-message', (message) => {
-      // Broadcast to everyone in the same channel room
-      io.to(message.channelId).emit('new-message', message);
+    // Add unique ID and save to persistent storage
+    message.id = genId('m');
+    messages.push(message);
+    saveData();
+    
+    // Broadcast to everyone in the same channel room
+    io.to(message.channelId).emit('new-message', message);
     });
 
     // Handle disconnect

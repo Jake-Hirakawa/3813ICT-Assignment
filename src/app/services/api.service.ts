@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { Message } from '../model/model';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -74,6 +75,10 @@ export class ApiService {
   removeUserFromChannel(groupId: string, channelId: string, username: string) {
     return this.http.delete<{ message: string }>(`${this.base}/groups/${groupId}/channels/${channelId}/members/${username}`);
   }
+
+  getChannelMessages(groupId: string, channelId: string, limit: number = 20) {
+  return this.http.get<{ messages: Message[] }>(`${this.base}/groups/${groupId}/channels/${channelId}/messages?limit=${limit}`);
+}
 
   // Join Requests
   getJoinRequests() {

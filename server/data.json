@@ -116,5 +116,20 @@
     }
   ],
   "joinRequests": [],
-  "messages": []
+  "messages": [
+    {
+      "id": "m17583680592768",
+      "channelId": "c1758363727909207",
+      "username": "Scarlett",
+      "content": "hello",
+      "timestamp": 1758368059275
+    },
+    {
+      "id": "m1758368077725300",
+      "channelId": "c1758363727909207",
+      "username": "Michael",
+      "content": "are these meesages persistent?",
+      "timestamp": 1758368077725
+    }
+  ]
 }
