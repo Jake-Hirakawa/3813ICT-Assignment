@@ -15,8 +15,10 @@
     @if (messages.length === 0) {
     <p class="no-messages">No messages yet. Start the conversation!</p>
     } @else { @for (message of messages; track message.id) {
-    <div class="message" [class.own-message]="message.username === currentUser?.username">
-      <div class="message-header">
+<!-- In the messages loop, add class for system messages -->
+<div class="message" 
+     [class.own-message]="message.username === currentUser?.username"
+     [class.system-message]="message.type === 'system'">      <div class="message-header">
         <strong>{{ message.username }}</strong>
       </div>
       <div class="message-content">{{ message.content }}</div>

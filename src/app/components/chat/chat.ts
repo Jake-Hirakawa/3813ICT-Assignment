@@ -61,25 +61,47 @@ export class Chat implements OnInit, OnDestroy {
     });
   }
 
-  setupSocket(): void {
-    // Connect to socket
-    this.socketService.connect();
+ setupSocket(): void {
+  this.socketService.connect();
 
-    // Join the channel room
-    if (this.channelId) {
-      this.socketService.joinChannel(this.channelId);
-    }
-
-    // Listen for new messages
-    this.socketService.onNewMessage().subscribe(message => {
-      this.messages.push(message);
-    });
-
-    // Optional: Listen for connection events
-    this.socketService.onConnect().subscribe(() => {
-      console.log('Connected to chat server');
-    });
+  if (this.channelId && this.currentUser) {
+    // Join with username
+    this.socketService.joinChannel(this.channelId, this.currentUser.username);
   }
+
+  // Listen for messages
+  this.socketService.onNewMessage().subscribe(message => {
+    this.messages.push(message);
+  });
+
+  // Listen for user joined
+  this.socketService.onUserJoined().subscribe(data => {
+    this.messages.push({
+      id: `system-${Date.now()}`,
+      channelId: this.channelId!,
+      username: 'System',
+      content: `${data.username} joined the channel`,
+      timestamp: data.timestamp,
+      type: 'system'
+    });
+  });
+
+  // Listen for user left
+  this.socketService.onUserLeft().subscribe(data => {
+    this.messages.push({
+      id: `system-${Date.now()}`,
+      channelId: this.channelId!,
+      username: 'System',
+      content: `${data.username} left the channel`,
+      timestamp: data.timestamp,
+      type: 'system'
+    });
+  });
+
+  this.socketService.onConnect().subscribe(() => {
+    console.log('Connected to chat server');
+  });
+}
 
   sendMessage(): void {
     if (!this.newMessageContent.trim() || !this.currentUser || !this.channelId) {

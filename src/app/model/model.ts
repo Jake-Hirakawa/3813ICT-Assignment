@@ -28,6 +28,7 @@ export interface Message {
   username: string;
   content: string;
   timestamp: number;
+  type?: 'message' | 'system';
 }
 
 export interface JoinRequest {

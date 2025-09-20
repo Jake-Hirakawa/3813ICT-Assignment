@@ -29,9 +29,9 @@ export class SocketService {
   }
 
   // Join a channel room
-  joinChannel(channelId: string): void {
+  joinChannel(channelId: string, username: string): void {
     if (this.socket) {
-      this.socket.emit('join-channel', channelId);
+      this.socket.emit('join-channel', { channelId, username });
     }
   }
 
@@ -71,6 +71,28 @@ export class SocketService {
       if (this.socket) {
         this.socket.on('disconnect', () => {
           observer.next();
+        });
+      }
+    });
+  }
+
+  // Listen for user joined events
+onUserJoined(): Observable<any> {
+  return new Observable(observer => {
+    if (this.socket) {
+      this.socket.on('user-joined', (data) => {
+        observer.next(data);
+      });
+    }
+  });
+}
+
+  // Listen for user left events
+  onUserLeft(): Observable<any> {
+    return new Observable(observer => {
+      if (this.socket) {
+        this.socket.on('user-left', (data) => {
+          observer.next(data);
         });
       }
     });
