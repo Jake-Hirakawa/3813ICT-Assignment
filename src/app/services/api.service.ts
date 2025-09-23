@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Message } from '../model/model';
+import { User, Group, Channel, Message, JoinRequest } from '../model/model';
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -10,16 +10,16 @@ export class ApiService {
 
   // Auth
   login(payload: { username: string; password: string }) {
-    return this.http.post<{ user: any }>(`${this.base}/auth/login`, payload);
+    return this.http.post<{ user: User }>(`${this.base}/auth/login`, payload);
   }
 
   // Users
   getUsers() {
-    return this.http.get<{ users: any[] }>(`${this.base}/users`);
+    return this.http.get<{ users: User[] }>(`${this.base}/users`);
   }
 
   addUser(payload: { username: string; email: string; password: string; role: string }) {
-    return this.http.post<{ user: any }>(`${this.base}/users`, payload);
+    return this.http.post<{ user: User }>(`${this.base}/users`, payload);
   }
 
   deleteUser(userId: string) {
@@ -28,15 +28,15 @@ export class ApiService {
 
   // Groups
   getGroup(groupId: string) {
-    return this.http.get< {group: any }>(`${this.base}/groups/${groupId}`)
+    return this.http.get<{ group: Group }>(`${this.base}/groups/${groupId}`);
   }
 
   getGroups() {
-    return this.http.get<{ groups: any[] }>(`${this.base}/groups`);
+    return this.http.get<{ groups: Group[] }>(`${this.base}/groups`);
   }
 
   createGroup(payload: { name: string; ownerUsername: string }) {
-    return this.http.post<{ group: any }>(`${this.base}/groups`, payload);
+    return this.http.post<{ group: Group }>(`${this.base}/groups`, payload);
   }
 
   deleteGroup(groupId: string) {
@@ -61,7 +61,7 @@ export class ApiService {
 
   // Channels
   addChannelToGroup(groupId: string, channelName: string) {
-    return this.http.post<{ channel: any }>(`${this.base}/groups/${groupId}/channels`, { name: channelName });
+    return this.http.post<{ channel: Channel }>(`${this.base}/groups/${groupId}/channels`, { name: channelName });
   }
 
   removeChannelFromGroup(groupId: string, channelId: string) {
@@ -77,16 +77,16 @@ export class ApiService {
   }
 
   getChannelMessages(groupId: string, channelId: string, limit: number = 20) {
-  return this.http.get<{ messages: Message[] }>(`${this.base}/groups/${groupId}/channels/${channelId}/messages?limit=${limit}`);
-}
+    return this.http.get<{ messages: Message[] }>(`${this.base}/groups/${groupId}/channels/${channelId}/messages?limit=${limit}`);
+  }
 
   // Join Requests
   getJoinRequests() {
-    return this.http.get<{ joinRequests: any[] }>(`${this.base}/join-requests`);
+    return this.http.get<{ joinRequests: JoinRequest[] }>(`${this.base}/join-requests`);
   }
 
   requestJoinGroup(groupId: string, username: string) {
-    return this.http.post<{ request: any }>(`${this.base}/groups/${groupId}/requests`, { username });
+    return this.http.post<{ request: JoinRequest }>(`${this.base}/groups/${groupId}/requests`, { username });
   }
 
   approveJoinRequest(requestId: string) {
