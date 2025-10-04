@@ -19,6 +19,7 @@ export class Chat implements OnInit, OnDestroy {
   groupId: string | null = null;
   channelId: string | null = null;
   group: Group | null = null;
+  groupUsers: User[] = [];
   channel: Channel | null = null;
 
   //Messaging
@@ -57,11 +58,27 @@ export class Chat implements OnInit, OnDestroy {
       next: (response) => {
         this.group = response.group;
         this.channel = this.group?.channels.find(c => c.id === this.channelId) || null;
+        
+        // Load all users to get avatars
+        this.loadGroupUsers();
       },
       error: (error) => {
         console.error('failed to load group details: ', error);
       }
     });
+  }
+
+  loadGroupUsers(): void {
+    this.apiService.getUsers().subscribe({
+      next: (response) => {
+        this.groupUsers = response.users;
+      }
+    });
+  }
+
+  getUserAvatar(username: string): string | null {
+    const user = this.groupUsers.find(u => u.username.toLowerCase() === username.toLowerCase());
+    return user?.avatarUrl || null;
   }
 
   loadRecentMessages(): void {

@@ -3,11 +3,46 @@
   <div class="header">
     <h1>Dashboard</h1>
     <div class="user-info">
+      @if (currentUser && currentUser.avatarUrl) {
+        <img [src]="'http://localhost:3000' + currentUser.avatarUrl" class="header-avatar" alt="Avatar">
+      } @else if (currentUser) {
+        <div class="header-avatar-placeholder">{{ currentUser.username.charAt(0).toUpperCase() }}</div>
+      }
       <span>{{ currentUser?.username }} ({{ getCurrentUserRole() }})</span>
       <button (click)="logout()" class="btn btn-secondary">Logout</button>
     </div>
   </div>
 
+  <!-- User Profile Section - Available to ALL users -->
+  <div class="user-profile-section">
+    <h3>My Profile</h3>
+    <div class="profile-card">
+      <div class="profile-info">
+        @if (currentUser && currentUser.avatarUrl) {
+          <img [src]="'http://localhost:3000' + currentUser.avatarUrl" class="profile-avatar" alt="Avatar">
+        } @else if (currentUser) {
+          <div class="profile-avatar-placeholder">{{ currentUser.username.charAt(0).toUpperCase() }}</div>
+        }
+        
+        <div>
+          <strong>{{ currentUser?.username }}</strong>
+          <p>{{ currentUser?.email }}</p>
+        </div>
+      </div>
+      
+      <div class="profile-actions">
+        <input 
+          type="file" 
+          id="myAvatarInput"
+          (change)="onMyAvatarSelected($event)"
+          accept="image/*"
+          style="display: none;">
+        <button (click)="triggerMyAvatarInput()" class="btn btn-primary">
+          Update Avatar
+        </button>
+      </div>
+    </div>
+  </div>
   
   <!-- User Management (Super Admin) -->
   @if (isSuperAdmin()) {

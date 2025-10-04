@@ -108,6 +108,35 @@ export class DashboardComponent implements OnInit {
     return 'User';
   }
 
+  triggerMyAvatarInput(): void {
+    const input = document.getElementById('myAvatarInput') as HTMLInputElement;
+    if (input) input.click();
+  }
+
+  onMyAvatarSelected(event: any): void {
+    const file = event.target.files[0];
+    if (file && file.type.startsWith('image/')) {
+      if (!this.currentUser?.id) return;
+      
+      this.apiService.uploadAvatar(this.currentUser.id, file).subscribe({
+        next: (response) => {
+          this.showMessage('Avatar updated successfully', 'success');
+          
+          // Update current user in localStorage
+          if (this.currentUser) {
+            this.currentUser.avatarUrl = response.avatarUrl;
+            localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
+          }
+        },
+        error: (error) => {
+          this.showMessage('Failed to upload avatar', 'error');
+        }
+      });
+    } else {
+      this.showMessage('Please select a valid image file', 'error');
+    }
+  }
+
   // User membership checks
   isUserInGroup(group: Group): boolean {
     return group.members?.some(member => 
