@@ -173,3 +173,81 @@
   background: #ccc;
   cursor: not-allowed;
 }
+
+/* Image button styling */
+.image-btn {
+  padding: 12px;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  min-width: 40px;
+}
+
+.image-btn:hover {
+  background: #5a6268;
+}
+
+/* Image preview styling */
+.image-preview {
+  margin-top: 10px;
+  padding: 10px;
+  background: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.send-image-btn {
+  padding: 5px 15px;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.send-image-btn:hover {
+  background: #218838;
+}
+
+.cancel-btn {
+  padding: 5px 15px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.cancel-btn:hover {
+  background: #c82333;
+}
+
+/* Chat image styling */
+.chat-image {
+  max-width: 300px;
+  max-height: 200px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid #ddd;
+}
+
+.chat-image:hover {
+  opacity: 0.9;
+}
+
+.image-message {
+  margin: 5px 0;
+}
+
+.image-caption {
+  margin-top: 5px;
+  font-size: 12px;
+  color: #666;
+  font-style: italic;
+}

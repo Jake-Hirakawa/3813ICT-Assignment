@@ -26,6 +26,8 @@ function onMessage(io, socket) {
                 id: `m${Date.now()}${Math.floor(Math.random() * 1000)}`,
                 timestamp: Date.now()
             };
+                
+            console.log('Saving message to DB:', messageDoc); 
             
             await db.collection('messages').insertOne(messageDoc);
             io.to(message.channelId).emit('new-message', messageDoc);

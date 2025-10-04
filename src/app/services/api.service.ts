@@ -101,4 +101,11 @@ export class ApiService {
   promoteToSuperAdmin(userId: string) {
     return this.http.post<{ message: string }>(`${this.base}/users/${userId}/promote-super-admin`, {});
   }
+
+  // Upload an image for message
+  uploadMessageImage(file: File) {
+    const formData = new FormData();
+    formData.append('image', file);
+    return this.http.post<{ imageUrl: string }>(`${this.base}/upload/message-image`, formData);
+  }
 }

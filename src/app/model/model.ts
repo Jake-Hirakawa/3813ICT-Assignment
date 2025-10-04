@@ -28,7 +28,8 @@ export interface Message {
   username: string;
   content: string;
   timestamp: number;
-  type?: 'message' | 'system';
+  type?: 'message' | 'system' | 'image';
+  imageUrl?: string;
 }
 
 export interface JoinRequest {

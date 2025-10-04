@@ -16,32 +16,76 @@
     <p class="no-messages">No messages yet. Start the conversation!</p>
     } @else { @for (message of messages; track message.id) {
 <!-- In the messages loop, add class for system messages -->
-<div class="message" 
-     [class.own-message]="message.username === currentUser?.username"
-     [class.system-message]="message.type === 'system'">      <div class="message-header">
-        <strong>{{ message.username }}</strong>
-      </div>
-      <div class="message-content">{{ message.content }}</div>
-      <div class="message-footer">
-        <span class="timestamp">{{ message.timestamp | date : 'short' }}</span>
-      </div>
+ <div class="message" 
+       [class.own-message]="message.username === currentUser?.username"
+       [class.system-message]="message.type === 'system'">
+    <div class="message-header" *ngIf="message.type !== 'system'">
+      <strong>{{ message.username }}</strong>
     </div>
+    
+    <!-- Regular text message -->
+    <div class="message-content" *ngIf="message.type !== 'image' && message.type !== 'system'">
+      {{ message.content }}
+    </div>
+    
+    <!-- Image message -->
+    <div class="image-message" *ngIf="message.type === 'image'">
+      <img [src]="'http://localhost:3000' + message.imageUrl" 
+           alt="Shared image" 
+           class="chat-image">
+      <div class="image-caption">{{ message.content }}</div>
+    </div>
+    
+    <!-- System message -->
+    <div class="message-content" *ngIf="message.type === 'system'">
+      {{ message.content }}
+    </div>
+    
+    <div class="message-footer">
+      <span class="timestamp">{{ message.timestamp | date:'short' }}</span>
+    </div>
+  </div>
     } }
   </div>
 
   <!-- Message Input -->
   <div class="message-input-area">
-    <div class="input-group">
-      <input
-        type="text"
-        [(ngModel)]="newMessageContent"
-        (keyup.enter)="sendMessage()"
-        placeholder="Type your message..."
-        class="message-input"
-      />
-      <button (click)="sendMessage()" [disabled]="!newMessageContent.trim()" class="send-btn">
-        Send
-      </button>
-    </div>
+  <div class="input-group">
+    <input 
+      type="text"
+      [(ngModel)]="newMessageContent"
+      (keyup.enter)="sendMessage()"
+      placeholder="Type your message..."
+      class="message-input">
+    
+    <input 
+      type="file" 
+      id="imageInput"
+      (change)="onImageSelected($event)"
+      accept="image/*"
+      style="display: none;">
+    
+    <button 
+      type="button"
+      (click)="triggerFileInput()"
+      class="image-btn"
+      title="Send Image">
+      Send Image
+    </button>
+    
+    <button 
+      (click)="sendMessage()" 
+      [disabled]="!newMessageContent.trim()"
+      class="send-btn">
+      Send
+    </button>
   </div>
+  @if (selectedImage) {
+    <div class="image-preview">
+      <span>Selected: {{ selectedImage.name }}</span>
+      <button (click)="sendImageMessage()" class="send-image-btn">Send Image</button>
+      <button (click)="cancelImageSelection()" class="cancel-btn">Cancel</button>
+    </div>
+  }
+</div>
 </div>

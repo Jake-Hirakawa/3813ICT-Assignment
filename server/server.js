@@ -3,6 +3,9 @@ import express from 'express';
 import cors from 'cors';
 import { Server } from 'socket.io';
 import dotenv from 'dotenv';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 import { connectDB, getDB, health } from './db.js';
 import { getUsers, addUser, deleteUser, loginUser, promoteToSuperAdmin } from './routes/userRoutes.js';
 import { getGroups, getGroup, addGroup, deleteGroup, addUserToGroup, removeUserFromGroup, promoteToGroupAdmin, demoteFromGroupAdmin } from './routes/groupRoutes.js';
@@ -16,6 +19,38 @@ dotenv.config();
 const app = express();
 const ALLOWED_ORIGINS = process.env.allowed_origins.split(' ');
 const HTTP_PORT = process.env.http_port || 3000;
+
+// Create images directory
+const imagesDir = path.join(process.cwd(), 'images');
+if (!fs.existsSync(imagesDir)) {
+    fs.mkdirSync(imagesDir);
+}
+
+// Configure multer for image uploads
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'images/');
+    },
+    filename: (req, file, cb) => {
+        const uniqueName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}${path.extname(file.originalname)}`;
+        cb(null, uniqueName);
+    }
+});
+
+const upload = multer({ 
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only image files are allowed'));
+        }
+    }
+});
+
+// Serve static images
+app.use('/images', express.static(path.join(process.cwd(), 'images')));
 
 app.use(cors({
     origin: (origin, callback) => {
@@ -102,6 +137,20 @@ async function mongo() {
         requestJoinGroup(app);
         approveJoinRequest(app);
         rejectJoinRequest(app);
+
+        app.post('/api/upload/message-image', upload.single('image'), (req, res) => {
+            try {
+                if (!req.file) {
+                    return res.status(400).json({ error: 'No file uploaded' });
+                }
+                
+                const imageUrl = `/images/${req.file.filename}`;
+                res.json({ imageUrl });
+            } catch (error) {
+                console.error('Upload error:', error);
+                res.status(500).json({ error: 'Failed to upload image' });
+            }
+        });
         
     } catch (error) {
         console.error('Database setup failed:', error);

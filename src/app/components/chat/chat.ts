@@ -24,6 +24,8 @@ export class Chat implements OnInit, OnDestroy {
   //Messaging
   messages: Message[] = [];
   newMessageContent = '';
+  selectedImage: File | null = null;
+
 
   constructor (
     private router: Router, 
@@ -141,6 +143,69 @@ export class Chat implements OnInit, OnDestroy {
     // Clear input
     this.newMessageContent = '';
   }
+
+onImageSelected(event: any): void {
+  const file = event.target.files[0];
+  console.log('File selected:', file);
+  if (file && file.type.startsWith('image/')) {
+    this.selectedImage = file;
+    console.log('selectedImage set to:', this.selectedImage);
+  } else {
+    alert('Please select a valid image file');
+  }
+}
+
+  sendImageMessage(): void {
+  if (!this.selectedImage || !this.currentUser || !this.channelId) {
+    console.log('Missing data:', { selectedImage: !!this.selectedImage, currentUser: !!this.currentUser, channelId: !!this.channelId });
+    return;
+  }
+
+  console.log('Uploading image:', this.selectedImage.name);
+  
+  this.apiService.uploadMessageImage(this.selectedImage).subscribe({
+    next: (response) => {
+      console.log('Upload response:', response);
+      
+      const message: Message = {
+        id: `temp-${Date.now()}`,
+        channelId: this.channelId!,
+        username: this.currentUser!.username,
+        content: `Shared an image`,
+        timestamp: Date.now(),
+        type: 'image',
+        imageUrl: response.imageUrl
+      };
+
+      console.log('Sending message via socket:', message);
+      this.socketService.sendMessage(message);
+      
+      this.selectedImage = null;
+      const fileInput = document.getElementById('imageInput') as HTMLInputElement;
+      if (fileInput) fileInput.value = '';
+    },
+    error: (error) => {
+      console.error('Failed to upload image:', error);
+      alert('Failed to upload image. Please try again.');
+    }
+  });
+}
+
+triggerFileInput(): void {
+  const fileInput = document.getElementById('imageInput') as HTMLInputElement;
+  if (fileInput) {
+    fileInput.click();
+  }
+}
+
+// Also update the cancel method to be cleaner
+cancelImageSelection(): void {
+  this.selectedImage = null;
+  const fileInput = document.getElementById('imageInput') as HTMLInputElement;
+  if (fileInput) {
+    fileInput.value = '';
+  }
+}
   
   goBackToDashboard(): void {
     this.router.navigate(['/dashboard']);
