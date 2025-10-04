@@ -143,10 +143,10 @@ async function mongo() {
     console.error('Database setup failed:', error);
   }
 }
+mongo().catch(console.dir);
 
 export { app, httpServer };
 
-mongo().catch(console.dir);
 
 if (process.argv[1] === new URL(import.meta.url).pathname || 
     process.argv[1] === new URL(import.meta.url).pathname.replace(/\//g, '\\')) {

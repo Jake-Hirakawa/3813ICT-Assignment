@@ -6,6 +6,7 @@ import { AuthService } from '../../services/auth.service';
 import { ApiService } from '../../services/api.service';
 import { SocketService } from '../../services/socket.service';
 import { User, Group, Channel, Message } from '../../model/model';
+import { Inject } from '@angular/core';
 
 @Component({
   selector: 'app-chat',
@@ -32,7 +33,7 @@ export class Chat implements OnInit, OnDestroy {
     private router: Router, 
     private route: ActivatedRoute, 
     private authService: AuthService, 
-    private apiService: ApiService,
+    @Inject(ApiService) private apiService: ApiService,
     private socketService: SocketService
   ){}
 
