@@ -7,6 +7,7 @@ describe('Join Request Routes Tests', () => {
   let testGroup;
   let groupAdmin;
   let requestUser;
+  const createdUserIds = [];
 
   before(async () => {
     // Create group admin
@@ -19,6 +20,7 @@ describe('Join Request Routes Tests', () => {
         role: 'Group Admin'
       });
     groupAdmin = adminRes.body.user;
+    createdUserIds.push(groupAdmin.id);
 
     // Create test group
     const groupRes = await request(app)
@@ -38,6 +40,18 @@ describe('Join Request Routes Tests', () => {
         password: 'pass'
       });
     requestUser = userRes.body.user;
+    createdUserIds.push(requestUser.id);
+  });
+
+  // Cleanup after all tests
+  after(async () => {
+    // Delete test group
+    await request(app).delete(`/api/groups/${testGroup.id}`);
+    
+    // Delete all created users
+    for (const userId of createdUserIds) {
+      await request(app).delete(`/api/users/${userId}`);
+    }
   });
 
   describe('GET /api/join-requests', () => {
@@ -85,6 +99,7 @@ describe('Join Request Routes Tests', () => {
           email: 'dup@test.com',
           password: 'pass'
         });
+      createdUserIds.push(newUserRes.body.user.id);
       
       // Create first request
       await request(app)
@@ -116,6 +131,7 @@ describe('Join Request Routes Tests', () => {
           password: 'pass'
         });
       approveUser = userRes.body.user;
+      createdUserIds.push(approveUser.id);
 
       // Create join request
       const requestRes = await request(app)
@@ -168,6 +184,7 @@ describe('Join Request Routes Tests', () => {
           password: 'pass'
         });
       rejectUser = userRes.body.user;
+      createdUserIds.push(rejectUser.id);
 
       // Create join request
       const requestRes = await request(app)

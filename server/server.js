@@ -147,10 +147,7 @@ mongo().catch(console.dir);
 
 export { app, httpServer };
 
+httpServer.listen(HTTP_PORT, () => {
+  console.log(`Server running at http://localhost:${HTTP_PORT}`);
+});
 
-if (process.argv[1] === new URL(import.meta.url).pathname || 
-    process.argv[1] === new URL(import.meta.url).pathname.replace(/\//g, '\\')) {
-  httpServer.listen(HTTP_PORT, () => {
-    console.log(`Server running at http://localhost:${HTTP_PORT}`);
-  });
-}

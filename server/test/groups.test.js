@@ -6,6 +6,8 @@ describe('Group Routes Tests', () => {
   
   let groupAdminUser;
   let regularUser;
+  const createdGroupIds = [];
+  const createdUserIds = [];
 
   // Create test users before all tests
   before(async () => {
@@ -19,6 +21,7 @@ describe('Group Routes Tests', () => {
         role: 'Group Admin'
       });
     groupAdminUser = adminRes.body.user;
+    createdUserIds.push(groupAdminUser.id);
 
     // Create a regular user
     const userRes = await request(app)
@@ -29,6 +32,20 @@ describe('Group Routes Tests', () => {
         password: 'pass'
       });
     regularUser = userRes.body.user;
+    createdUserIds.push(regularUser.id);
+  });
+
+  // Cleanup after all tests
+  after(async () => {
+    // Delete all created groups
+    for (const groupId of createdGroupIds) {
+      await request(app).delete(`/api/groups/${groupId}`);
+    }
+    
+    // Delete all created users
+    for (const userId of createdUserIds) {
+      await request(app).delete(`/api/users/${userId}`);
+    }
   });
 
   describe('GET /api/groups', () => {
@@ -59,6 +76,8 @@ describe('Group Routes Tests', () => {
       assert.equal(response.body.group.ownerUsername, groupAdminUser.username);
       assert(response.body.group.admins.includes(groupAdminUser.username), 'Owner should be admin');
       assert(response.body.group.members.includes(groupAdminUser.username), 'Owner should be member');
+      
+      createdGroupIds.push(response.body.group.id);
     });
 
     it('should reject group creation by regular user', async () => {
@@ -98,6 +117,7 @@ describe('Group Routes Tests', () => {
           ownerUsername: groupAdminUser.username
         });
       testGroup = response.body.group;
+      createdGroupIds.push(testGroup.id);
     });
 
     it('should add user to group', async () => {
@@ -152,6 +172,7 @@ describe('Group Routes Tests', () => {
           ownerUsername: groupAdminUser.username
         });
       testGroup = groupRes.body.group;
+      createdGroupIds.push(testGroup.id);
 
       // Add regular user to group
       await request(app)
@@ -195,6 +216,7 @@ describe('Group Routes Tests', () => {
       const groupsRes = await request(app).get('/api/groups');
       const deletedGroup = groupsRes.body.groups.find(g => g.id === groupId);
       assert(!deletedGroup, 'Group should be deleted');
+      
     });
 
   });

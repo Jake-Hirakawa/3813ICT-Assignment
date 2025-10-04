@@ -7,6 +7,7 @@ describe('Channel Routes Tests', () => {
   let testGroup;
   let groupAdmin;
   let groupMember;
+  const createdUserIds = [];
 
   before(async () => {
     // Create group admin
@@ -19,6 +20,7 @@ describe('Channel Routes Tests', () => {
         role: 'Group Admin'
       });
     groupAdmin = adminRes.body.user;
+    createdUserIds.push(groupAdmin.id);
 
     // Create test group
     const groupRes = await request(app)
@@ -38,10 +40,22 @@ describe('Channel Routes Tests', () => {
         password: 'pass'
       });
     groupMember = memberRes.body.user;
+    createdUserIds.push(groupMember.id);
 
     await request(app)
       .post(`/api/groups/${testGroup.id}/members`)
       .send({ username: groupMember.username });
+  });
+
+  // Cleanup after all tests
+  after(async () => {
+    // Delete test group (this also deletes all channels)
+    await request(app).delete(`/api/groups/${testGroup.id}`);
+    
+    // Delete all created users
+    for (const userId of createdUserIds) {
+      await request(app).delete(`/api/users/${userId}`);
+    }
   });
 
   describe('POST /api/groups/:id/channels', () => {
@@ -122,6 +136,7 @@ describe('Channel Routes Tests', () => {
           email: 'outsider@test.com',
           password: 'pass'
         });
+      createdUserIds.push(outsiderRes.body.user.id);
       
       const response = await request(app)
         .post(`/api/groups/${testGroup.id}/channels/${testChannel.id}/members`)

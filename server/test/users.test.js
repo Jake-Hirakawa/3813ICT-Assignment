@@ -4,6 +4,15 @@ import { app } from '../server.js';
 
 describe('User Routes Tests', () => {
   
+  const createdUserIds = [];
+
+  // Cleanup after all tests
+  after(async () => {
+    for (const userId of createdUserIds) {
+      await request(app).delete(`/api/users/${userId}`);
+    }
+  });
+
   describe('GET /api/users', () => {
     
     it('should return all users without passwords', async () => {
@@ -38,19 +47,22 @@ describe('User Routes Tests', () => {
       assert.equal(response.body.user.username, newUser.username);
       assert(!response.body.user.password, 'Password should not be in response');
       assert(response.body.user.roles.includes('User'), 'Should have default User role');
+      
+      createdUserIds.push(response.body.user.id);
     });
 
     it('should reject duplicate username', async () => {
       const username = `duplicate_${Date.now()}`;
       
       // Create first user
-      await request(app)
+      const firstRes = await request(app)
         .post('/api/users')
         .send({
           username: username,
           email: 'first@example.com',
           password: 'pass'
         });
+      createdUserIds.push(firstRes.body.user.id);
       
       // Try duplicate
       const response = await request(app)
@@ -101,6 +113,8 @@ describe('User Routes Tests', () => {
       const usersRes = await request(app).get('/api/users');
       const deletedUser = usersRes.body.users.find(u => u.id === userId);
       assert(!deletedUser, 'User should be deleted from database');
+      
+      // No need to add to cleanup array since it's already deleted
     });
 
   });
@@ -118,6 +132,7 @@ describe('User Routes Tests', () => {
         });
       
       const userId = createRes.body.user.id;
+      createdUserIds.push(userId);
       
       // Promote
       const promoteRes = await request(app)

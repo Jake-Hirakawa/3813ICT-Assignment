@@ -36,6 +36,15 @@ describe('Message Routes Tests', () => {
     testChannel = channelRes.body.channel;
   });
 
+  // Cleanup after all tests
+  after(async () => {
+    // Delete test group (this also deletes channels and messages)
+    await request(app).delete(`/api/groups/${testGroup.id}`);
+    
+    // Delete admin user
+    await request(app).delete(`/api/users/${groupAdmin.id}`);
+  });
+
   describe('GET /api/groups/:groupId/channels/:channelId/messages', () => {
     
     it('should return messages for a channel', async () => {
