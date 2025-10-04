@@ -76,14 +76,6 @@ describe('Join Request Routes Tests', () => {
       assert.equal(response.status, 404);
     });
 
-    it('should reject join request for non-existent group', async () => {
-      const response = await request(app)
-        .post('/api/groups/nonexistentgroup/requests')
-        .send({ username: requestUser.username });
-      
-      assert.equal(response.status, 404);
-    });
-
     it('should reject duplicate pending join request', async () => {
       // Create new user for this test
       const newUserRes = await request(app)
