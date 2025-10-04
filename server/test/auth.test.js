@@ -3,14 +3,6 @@ import request from 'supertest';
 import { app } from '../server.js';
 
 describe('Authentication Tests', () => {
-  
-  before(function() {
-    console.log('Starting authentication tests...');
-  });
-
-  after(function() {
-    console.log('Authentication tests complete');
-  });
 
   describe('POST /api/auth/login', () => {
     
