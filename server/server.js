@@ -144,10 +144,13 @@ async function mongo() {
   }
 }
 
+export { app, httpServer };
+
 mongo().catch(console.dir);
 
-httpServer.listen(HTTP_PORT, () => {
-  console.log(`Server running at http://localhost:${HTTP_PORT}`);
-});
-
-export { app, httpServer };
+if (process.argv[1] === new URL(import.meta.url).pathname || 
+    process.argv[1] === new URL(import.meta.url).pathname.replace(/\//g, '\\')) {
+  httpServer.listen(HTTP_PORT, () => {
+    console.log(`Server running at http://localhost:${HTTP_PORT}`);
+  });
+}
