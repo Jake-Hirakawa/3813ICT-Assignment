@@ -89,6 +89,11 @@
 
 .btn:hover:not(:disabled) { opacity: 0.8; }
 
+.button-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
 /* Actions */
 .actions {
   display: flex;
@@ -225,30 +230,6 @@
   justify-content: center;
   font-weight: 600;
   border: 2px solid white;
-  flex-shrink: 0;
-}
-
-/* Profile section avatar - slightly larger */
-.profile-avatar {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  object-fit: cover; /* This crops the image to fit */
-  border: 2px solid #e1e8ed;
-  flex-shrink: 0;
-}
-
-.profile-avatar-placeholder {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 24px;
   flex-shrink: 0;
 }
 

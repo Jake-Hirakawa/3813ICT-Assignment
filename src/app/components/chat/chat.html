@@ -93,21 +93,20 @@
         accept="image/*"
         style="display: none"
       />
-
-      <button type="button" (click)="triggerFileInput()" class="image-btn" title="Send Image">
-        Send Image
-      </button>
-
       <button (click)="sendMessage()" [disabled]="!newMessageContent.trim()" class="send-btn">
         Send
       </button>
     </div>
-    @if (selectedImage) {
-    <div class="image-preview">
+    <div class="image-section">
+      @if (selectedImage) {
       <span>Selected: {{ selectedImage.name }}</span>
       <button (click)="sendImageMessage()" class="send-image-btn">Send Image</button>
       <button (click)="cancelImageSelection()" class="cancel-btn">Cancel</button>
+      } @else {
+      <button type="button" (click)="triggerFileInput()" class="image-btn" title="Send Image">
+        Send Image
+      </button>
+      }
     </div>
-    }
   </div>
 </div>

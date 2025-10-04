@@ -4,16 +4,22 @@
     <h1>Dashboard</h1>
     <div class="user-info">
       @if (currentUser && currentUser.avatarUrl) {
-        <img [src]="'http://localhost:3000' + currentUser.avatarUrl" class="header-avatar" alt="Avatar">
+      <img
+        [src]="'http://localhost:3000' + currentUser.avatarUrl"
+        class="header-avatar"
+        alt="Avatar"
+      />
       } @else if (currentUser) {
-        <div class="header-avatar-placeholder">{{ currentUser.username.charAt(0).toUpperCase() }}</div>
+      <div class="header-avatar-placeholder">
+        {{ currentUser.username.charAt(0).toUpperCase() }}
+      </div>
       }
       <span>{{ currentUser?.username }} ({{ getCurrentUserRole() }})</span>
       <button (click)="logout()" class="btn btn-secondary">Logout</button>
     </div>
   </div>
 
-  <!-- User Profile Section - Available to ALL users -->
+  <!-- User Profile Section - Available to ALL users
   <div class="user-profile-section">
     <h3>My Profile</h3>
     <div class="profile-card">
@@ -23,11 +29,6 @@
         } @else if (currentUser) {
           <div class="profile-avatar-placeholder">{{ currentUser.username.charAt(0).toUpperCase() }}</div>
         }
-        
-        <div>
-          <strong>{{ currentUser?.username }}</strong>
-          <p>{{ currentUser?.email }}</p>
-        </div>
       </div>
       
       <div class="profile-actions">
@@ -42,225 +43,283 @@
         </button>
       </div>
     </div>
-  </div>
-  
+  </div> -->
+
   <!-- User Management (Super Admin) -->
   @if (isSuperAdmin()) {
-    <section class="section">
-      <h2>Create User</h2>
-      <!-- Create User -->
-      <form (ngSubmit)="createUser()" class="form-row">
-        <input [(ngModel)]="newUser.username" name="username" placeholder="Username" required class="input">
-        <input [(ngModel)]="newUser.email" name="email" type="email" placeholder="Email" required class="input">
-        <input [(ngModel)]="newUser.password" name="password" type="password" placeholder="Password" class="input">
-        <select [(ngModel)]="newUser.role" name="role" class="input">
-          <option value="User">User</option>
-          <option value="Group Admin">Group Admin</option>
-          <option value="Super Admin">Super Admin</option>
-        </select>
-        <button type="submit" class="btn btn-primary">Create User</button>
-      </form>
+  <section class="section">
+    <h2>Create User</h2>
+    <!-- Create User -->
+    <form (ngSubmit)="createUser()" class="form-row">
+      <input
+        [(ngModel)]="newUser.username"
+        name="username"
+        placeholder="Username"
+        required
+        class="input"
+      />
+      <input
+        [(ngModel)]="newUser.email"
+        name="email"
+        type="email"
+        placeholder="Email"
+        required
+        class="input"
+      />
+      <input
+        [(ngModel)]="newUser.password"
+        name="password"
+        type="password"
+        placeholder="Password"
+        class="input"
+      />
+      <select [(ngModel)]="newUser.role" name="role" class="input">
+        <option value="User">User</option>
+        <option value="Group Admin">Group Admin</option>
+        <option value="Super Admin">Super Admin</option>
+      </select>
+      <button type="submit" class="btn btn-primary">Create User</button>
+    </form>
 
-      <h2>User Management</h2>
-      <!-- Users List -->
-      <div class="users-grid">
-        @for (user of users; track user.id) {
-          <div class="user-card">
-            <div class="user-info">
-              <strong>{{ user.username }}</strong><br>
-              <small>{{ user.email }}</small><br>
-              <span class="user-roles">{{ user.roles?.join(', ') }}</span>
-            </div>
-            
-            @if (user.username !== 'super' && user.id !== currentUser?.id) {
-              <div class="user-actions">
-                <!-- Only show promote button if user is not already Super Admin -->
-                @if (canPromoteToSuperAdmin(user)) {
-                  <button (click)="promoteToSuperAdmin(user)" 
-                          class="btn btn-sm btn-primary">
-                    Make Super Admin
-                  </button>
-                }
-                
-                <!-- Delete Button -->
-                <button (click)="deleteUser(user)" 
-                        class="btn btn-sm btn-danger">
-                  Delete
-                </button>
-              </div>
-            }
-          </div>
+    <h2>User Management</h2>
+    <!-- Users List -->
+    <div class="users-grid">
+      @for (user of users; track user.id) {
+      <div class="user-card">
+        <div class="user-info">
+          <strong>{{ user.username }}</strong
+          ><br />
+          <small>{{ user.email }}</small
+          ><br />
+          <span class="user-roles">{{ user.roles?.join(', ') }}</span>
+        </div>
+
+        @if (user.username !== 'super' && user.id !== currentUser?.id) {
+        <div class="user-actions">
+          <!-- Only show promote button if user is not already Super Admin -->
+          @if (canPromoteToSuperAdmin(user)) {
+          <button (click)="promoteToSuperAdmin(user)" class="btn btn-sm btn-primary">
+            Make Super Admin
+          </button>
+          }
+
+          <!-- Delete Button -->
+          <button (click)="deleteUser(user)" class="btn btn-sm btn-danger">Delete</button>
+        </div>
         }
       </div>
-    </section>
+      }
+    </div>
+  </section>
   }
-
 
   <!-- Group Creation (Admins) -->
   @if (isGroupAdmin() || isSuperAdmin()) {
-    <section class="section">
-      <h2>Create Group</h2>
-      <form (ngSubmit)="createGroup()" class="form-row">
-        <input [(ngModel)]="newGroup.name" name="groupName" placeholder="Group name" required class="input">
-        <button type="submit" class="btn btn-primary">Create Group</button>
-      </form>
-    </section>
+  <section class="section">
+    <h2>Create Group</h2>
+    <form (ngSubmit)="createGroup()" class="form-row">
+      <input
+        [(ngModel)]="newGroup.name"
+        name="groupName"
+        placeholder="Group name"
+        required
+        class="input"
+      />
+      <button type="submit" class="btn btn-primary">Create Group</button>
+    </form>
+  </section>
   }
 
   <!-- All Groups Section -->
   <section class="section">
     <h2>All Groups</h2>
-    
-@for (group of groups; track group.id) {
-  <div class="card">
-    <div class="card-header">
-      <h3>{{ group.name }}</h3>
-      <div class="actions">
-        @if (isUserInGroup(group)) {
-          <button (click)="leaveGroup(group)" class="btn btn-warning">Leave</button>
-        } @else {
-          @if (isSuperAdmin()) {
-            <button (click)="joinGroupDirectly(group)" class="btn btn-primary">Join</button>
-          } @else {
-            @if (!isUserPendingForGroup(group)) {
-              <button (click)="requestJoinGroup(group)" class="btn btn-secondary">Request Join</button>
-            } @else {
-              <span class="tag">Pending</span>
-            }
-          }
-        }
-        @if (canAdminGroup(group)) {
-          <button (click)="deleteGroup(group)" class="btn btn-danger">Delete Group</button>
-        }
-      </div>
-    </div>
 
-        <!-- Group Info -->
-        <div class="group-info">
-          <p><strong>Members:</strong> {{ group.members.length || 0 }} | <strong>Channels:</strong> {{ group.channels.length || 0 }}</p>
-          @if (group.ownerUsername) {
-            <p><strong>Owner:</strong> {{ group.ownerUsername }}</p>
+    @for (group of groups; track group.id) {
+    <div class="card">
+      <div class="card-header">
+        <h3>{{ group.name }}</h3>
+        <div class="actions">
+          @if (isUserInGroup(group)) {
+          <button (click)="leaveGroup(group)" class="btn btn-warning">Leave</button>
+          } @else { @if (isSuperAdmin()) {
+          <button (click)="joinGroupDirectly(group)" class="btn btn-primary">Join</button>
+          } @else { @if (!isUserPendingForGroup(group)) {
+          <button (click)="requestJoinGroup(group)" class="btn btn-secondary">Request Join</button>
+          } @else {
+          <span class="tag">Pending</span>
+          } } } @if (canAdminGroup(group)) {
+          <button (click)="deleteGroup(group)" class="btn btn-danger">Delete Group</button>
           }
         </div>
+      </div>
 
-        <!-- Channels (if user is member) -->
-        @if (isUserInGroup(group)) {
-          <div class="subsection">
-            <h4>Channels</h4>
-            @for (channel of group.channels; track channel.id) {
-              <div class="channel">
-                <span><strong># {{ channel.name }}</strong> ({{ channel.members.length || 0 }} members)</span>
-                <div class="actions">          
-                  @if (isUserInChannel(group, channel)) {
-                    <button (click)="navigateToChat(group, channel)" class="btn btn-primary btn-sm">Chat</button>
-                    <button (click)="leaveChannel(group, channel)" class="btn btn-sm btn-warning">Leave</button>
-                  } @else {
-                    <button (click)="joinChannel(group, channel)" class="btn btn-sm btn-primary">Join</button>
-                  }
-                  @if (canAdminGroup(group)) {
-                    <button (click)="removeChannelFromGroup(group, channel)" class="btn btn-sm btn-danger">Delete</button>
-                  }
-                </div>
-              </div>
-            }
-          </div>
-        }
-
-        <!-- Admin Controls -->
-        @if (canAdminGroup(group)) {
-          <div class="subsection admin-section">
-            <h4>Administration</h4>
-            
-            <!-- Add Channel -->
-            <div class="form-row">
-              <input [(ngModel)]="newChannelName[group.id]" placeholder="New channel name" class="input">
-              <button (click)="addChannelToGroup(group, newChannelName[group.id])" 
-                      [disabled]="!newChannelName[group.id]" class="btn btn-secondary">Add Channel</button>
-            </div>
-
-            <!-- Manage Members -->
-            <div class="member-management">
-              <h6>Members</h6>
-              <div class="members-list">
-                @for (member of group.members; track member) {
-                  <div class="member-item">
-                    <span class="member-name">
-                      {{ member }}
-                      @if (isUserAdminOfGroup(group, member)) {
-                        <span class="admin-badge">Admin</span>
-                      }
-                    </span>
-                    <div class="member-actions">
-                      @if (member !== currentUser?.username) {
-                        @if (isUserAdminOfGroup(group, member)) {
-                          <!-- User is already admin - show demote button -->
-                          <button (click)="demoteFromGroupAdmin(group, member)" 
-                                  class="btn btn-sm btn-warning">Remove Admin</button>
-                        } @else {
-                          <!-- User is regular member - show promote button -->
-                          <button (click)="promoteToGroupAdmin(group, member)" 
-                                  class="btn btn-sm btn-success">Make Admin</button>
-                        }
-                        <button (click)="removeUserFromGroup(group, member)" 
-                                class="btn btn-sm btn-danger">Remove</button>
-                      }
-                    </div>
-                  </div>
-                }
-              </div>
-              
-              <!-- Add User to Group -->
-              <div class="add-member-form">
-                <select [(ngModel)]="selectedUserForGroup[group.id]" class="form-select">
-                  <option value="">Select user to add...</option>
-                  @for (user of getAvailableUsersForGroup(group); track user.id) {
-                    <option [value]="user.username">
-                      {{ user.username }}
-                    </option>
-                  }
-                </select>
-                <button 
-                  (click)="addUserToGroup(group, selectedUserForGroup[group.id])"
-                  [disabled]="!selectedUserForGroup[group.id]"
-                  class="btn btn-secondary btn-sm">
-                  Add User
-                </button>
-              </div>
-            </div>
-
-            <!-- Join Requests -->
-            @if (getPendingRequestsForGroup(group).length > 0) {
-              <div class="requests">
-                <strong>Join Requests:</strong>
-                @for (request of getPendingRequestsForGroup(group); track request.id) {
-                  <div class="request">
-                    <span>{{ request.username }}</span>
-                    <div class="actions">
-                      <button (click)="approveJoinRequest(request)" class="btn btn-sm btn-success">Approve</button>
-                      <button (click)="rejectJoinRequest(request)" class="btn btn-sm btn-danger">Reject</button>
-                    </div>
-                  </div>
-                }
-              </div>
-            }
-          </div>
+      <!-- Group Info -->
+      <div class="group-info">
+        <p>
+          <strong>Members:</strong> {{ group.members.length || 0 }} | <strong>Channels:</strong>
+          {{ group.channels.length || 0 }}
+        </p>
+        @if (group.ownerUsername) {
+        <p><strong>Owner:</strong> {{ group.ownerUsername }}</p>
         }
       </div>
+
+      <!-- Channels (if user is member) -->
+      @if (isUserInGroup(group)) {
+      <div class="subsection">
+        <h4>Channels</h4>
+        @for (channel of group.channels; track channel.id) {
+        <div class="channel">
+          <span
+            ><strong># {{ channel.name }}</strong> ({{ channel.members.length || 0 }} members)</span
+          >
+          <div class="actions">
+            @if (isUserInChannel(group, channel)) {
+            <button (click)="navigateToChat(group, channel)" class="btn btn-primary btn-sm">
+              Chat
+            </button>
+            <button (click)="leaveChannel(group, channel)" class="btn btn-sm btn-warning">
+              Leave
+            </button>
+            } @else {
+            <button (click)="joinChannel(group, channel)" class="btn btn-sm btn-primary">
+              Join
+            </button>
+            } @if (canAdminGroup(group)) {
+            <button (click)="removeChannelFromGroup(group, channel)" class="btn btn-sm btn-danger">
+              Delete
+            </button>
+            }
+          </div>
+        </div>
+        }
+      </div>
+      }
+
+      <!-- Admin Controls -->
+      @if (canAdminGroup(group)) {
+      <div class="subsection admin-section">
+        <h4>Administration</h4>
+
+        <!-- Add Channel -->
+        <div class="form-row">
+          <input
+            [(ngModel)]="newChannelName[group.id]"
+            placeholder="New channel name"
+            class="input"
+          />
+          <button
+            (click)="addChannelToGroup(group, newChannelName[group.id])"
+            [disabled]="!newChannelName[group.id]"
+            class="btn btn-secondary"
+          >
+            Add Channel
+          </button>
+        </div>
+
+        <!-- Manage Members -->
+        <div class="member-management">
+          <h6>Members</h6>
+          <div class="members-list">
+            @for (member of group.members; track member) {
+            <div class="member-item">
+              <span class="member-name">
+                {{ member }}
+                @if (isUserAdminOfGroup(group, member)) {
+                <span class="admin-badge">Admin</span>
+                }
+              </span>
+              <div class="member-actions">
+                @if (member !== currentUser?.username) { @if (isUserAdminOfGroup(group, member)) {
+                <!-- User is already admin - show demote button -->
+                <button
+                  (click)="demoteFromGroupAdmin(group, member)"
+                  class="btn btn-sm btn-warning"
+                >
+                  Remove Admin
+                </button>
+                } @else {
+                <!-- User is regular member - show promote button -->
+                <button (click)="promoteToGroupAdmin(group, member)" class="btn btn-sm btn-success">
+                  Make Admin
+                </button>
+                }
+                <button (click)="removeUserFromGroup(group, member)" class="btn btn-sm btn-danger">
+                  Remove
+                </button>
+                }
+              </div>
+            </div>
+            }
+          </div>
+
+          <!-- Add User to Group -->
+          <div class="add-member-form">
+            <select [(ngModel)]="selectedUserForGroup[group.id]" class="form-select">
+              <option value="">Select user to add...</option>
+              @for (user of getAvailableUsersForGroup(group); track user.id) {
+              <option [value]="user.username">
+                {{ user.username }}
+              </option>
+              }
+            </select>
+            <button
+              (click)="addUserToGroup(group, selectedUserForGroup[group.id])"
+              [disabled]="!selectedUserForGroup[group.id]"
+              class="btn btn-secondary btn-sm"
+            >
+              Add User
+            </button>
+          </div>
+        </div>
+
+        <!-- Join Requests -->
+        @if (getPendingRequestsForGroup(group).length > 0) {
+        <div class="requests">
+          <strong>Join Requests:</strong>
+          @for (request of getPendingRequestsForGroup(group); track request.id) {
+          <div class="request">
+            <span>{{ request.username }}</span>
+            <div class="actions">
+              <button (click)="approveJoinRequest(request)" class="btn btn-sm btn-success">
+                Approve
+              </button>
+              <button (click)="rejectJoinRequest(request)" class="btn btn-sm btn-danger">
+                Reject
+              </button>
+            </div>
+          </div>
+          }
+        </div>
+        }
+      </div>
+      }
+    </div>
     }
   </section>
 
   <!-- Account Management -->
   <section class="section">
     <h2>Account</h2>
-    @if (currentUser?.username !== 'super') {
+    <input
+      type="file"
+      id="myAvatarInput"
+      (change)="onMyAvatarSelected($event)"
+      accept="image/*"
+      style="display: none"
+    />
+    <div class="button-group">
+      <button (click)="triggerMyAvatarInput()" class="btn btn-primary">Update Avatar</button>
+      @if (currentUser?.username !== 'super') {
       <button (click)="deleteOwnAccount()" class="btn btn-danger">Delete My Account</button>
-    }
+      }
+    </div>
   </section>
 
   <!-- Messages -->
   @if (message) {
-    <div class="message" [class]="messageType">
-      {{ message }}
-    </div>
+  <div class="message" [class]="messageType">
+    {{ message }}
+  </div>
   }
 </div>
