@@ -9,6 +9,12 @@ export class AuthGuard implements CanActivate {
   
   constructor(private authService: AuthService, private router: Router) {}
 
+  // Route activation guard
+  // Called before activating a protected route
+  // Returns true if user is authenticated (allows navigation)
+  // Returns false if user is not authenticated (blocks navigation)
+  // Redirects unauthenticated users to login page
+  // Used in route configuration to protect dashboard and other secure routes
   canActivate(): boolean {
     if (this.authService.isLoggedIn()) {
       return true;

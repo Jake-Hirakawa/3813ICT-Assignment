@@ -2,6 +2,10 @@ import { getDB } from '../db.js';
 import { ObjectId } from 'mongodb';
 import { transformDocs } from '../utils/dbHelpers.js';
 
+// Get all join requests
+// GET /api/join-requests
+// Returns: { joinRequests: [] } array of all join requests or error
+// Transforms MongoDB _id to id field for client compatibility
 function getJoinRequests(app) {
     app.get('/api/join-requests', async (req, res) => {
         try {
@@ -15,6 +19,14 @@ function getJoinRequests(app) {
     });
 }
 
+// Create a join request for a group
+// POST /api/groups/:gid/requests
+// Body: { username: string }
+// Returns: { request } with generated ID or error
+// Validates both user and group exist
+// Prevents requests if user is already a member
+// Prevents duplicate pending requests (case-insensitive)
+// Creates request with 'pending' status and timestamp
 function requestJoinGroup(app) {
     app.post('/api/groups/:gid/requests', async (req, res) => {
         try {
@@ -74,6 +86,14 @@ function requestJoinGroup(app) {
     });
 }
 
+// Approve a join request
+// POST /api/join-requests/:id/approve
+// Returns: success message or error
+// Validates request exists and is pending
+// Adds user to group's members array
+// Adds group ID to user's groups array
+// Updates request status to 'approved'
+// Uses $addToSet to prevent duplicates
 function approveJoinRequest(app) {
     app.post('/api/join-requests/:id/approve', async (req, res) => {
         try {
@@ -113,6 +133,12 @@ function approveJoinRequest(app) {
     });
 }
 
+// Reject a join request
+// POST /api/join-requests/:id/reject
+// Returns: success message or error
+// Updates request status to 'rejected'
+// Does not modify group or user membership
+// Request remains in database for record keeping
 function rejectJoinRequest(app) {
     app.post('/api/join-requests/:id/reject', async (req, res) => {
         try {

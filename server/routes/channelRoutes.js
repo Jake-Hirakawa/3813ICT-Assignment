@@ -1,6 +1,10 @@
 import { getDB } from '../db.js';
 import { ObjectId } from 'mongodb';
 
+// Create a new channel in a group
+// POST /api/groups/:id/channels
+// Body: { name: string }
+// Returns: { channel } with generated ID or error
 function addChannelToGroup(app) {
     app.post('/api/groups/:id/channels', async (req, res) => {
         try {
@@ -37,6 +41,10 @@ function addChannelToGroup(app) {
     });
 }
 
+// Delete a channel from a group
+// DELETE /api/groups/:groupId/channels/:channelId
+// Also deletes all messages associated with the channel
+// Returns: success message or error
 function removeChannelFromGroup(app) {
     app.delete('/api/groups/:groupId/channels/:channelId', async (req, res) => {
         try {
@@ -63,6 +71,11 @@ function removeChannelFromGroup(app) {
     });
 }
 
+// Add a user to a channel
+// POST /api/groups/:groupId/channels/:channelId/members
+// Body: { username: string }
+// User must be a group member first
+// Returns: success message or error
 function addUserToChannel(app) {
     app.post('/api/groups/:groupId/channels/:channelId/members', async (req, res) => {
         try {
@@ -100,6 +113,9 @@ function addUserToChannel(app) {
     });
 }
 
+// Remove a user from a channel
+// DELETE /api/groups/:groupId/channels/:channelId/members/:username
+// Returns: success message or error
 function removeUserFromChannel(app) {
     app.delete('/api/groups/:groupId/channels/:channelId/members/:username', async (req, res) => {
         try {

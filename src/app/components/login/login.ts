@@ -19,6 +19,10 @@ export class LoginComponent implements OnInit {
 
   constructor(private router: Router, private authService: AuthService) {}
 
+  // Component initialization
+  // Checks if user is already authenticated
+  // Redirects to dashboard if already logged in
+  // Prevents re-login when session exists
   ngOnInit() {
     // If user is already logged in, redirect to dashboard
     if (this.authService.isLoggedIn()) {
@@ -26,6 +30,16 @@ export class LoginComponent implements OnInit {
     }
   }
 
+  // Handle login form submission
+  // Clears previous error messages
+  // Sets loading state to disable form during request
+  // Validates both username and password are provided
+  // Calls AuthService.login() with credentials
+  // On success: logs success message and navigates to dashboard
+  // On failure: displays appropriate error message based on status code
+  // Clears password field on any error for security
+  // Resets loading state after completion
+  // Logs attempt and errors to console for debugging
   onLogin() {
     // Clear previous errors and set loading state
     this.errorMessage = '';

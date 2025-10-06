@@ -2,6 +2,10 @@ import { getDB } from '../db.js';
 import { ObjectId } from 'mongodb';
 import { transformDoc, transformDocs } from '../utils/dbHelpers.js';
 
+// Get all groups
+// GET /api/groups
+// Returns: { groups: [] } array of all groups or error
+// Transforms MongoDB _id to id field for client compatibility
 function getGroups(app) {
     app.get('/api/groups', async (req, res) => {
         try {
@@ -15,6 +19,10 @@ function getGroups(app) {
     });
 }
 
+// Get a single group by ID
+// GET /api/groups/:id
+// Returns: { group } object or 404 error
+// Transforms MongoDB _id to id field for client compatibility
 function getGroup(app) {
     app.get('/api/groups/:id', async (req, res) => {
         try {
@@ -34,6 +42,13 @@ function getGroup(app) {
     });
 }
 
+// Create a new group
+// POST /api/groups
+// Body: { name: string, ownerUsername: string }
+// Returns: { group } with generated ID or error
+// Only Group Admins or Super Admins can create groups
+// Automatically adds owner as admin and member
+// Updates owner's groups array
 function addGroup(app) {
     app.post('/api/groups', async (req, res) => {
         try {
@@ -79,6 +94,13 @@ function addGroup(app) {
     });
 }
 
+// Delete a group
+// DELETE /api/groups/:id
+// Returns: success message or error
+// Removes group from all users' groups arrays
+// Deletes all related join requests
+// Deletes all messages in group's channels
+// Completely removes the group from database
 function deleteGroup(app) {
     app.delete('/api/groups/:id', async (req, res) => {
         try {
@@ -117,6 +139,13 @@ function deleteGroup(app) {
     });
 }
 
+// Add a user to a group
+// POST /api/groups/:id/members
+// Body: { username: string }
+// Returns: success message or error
+// Validates user and group exist
+// Prevents duplicate membership (case-insensitive)
+// Updates both group's members array and user's groups array
 function addUserToGroup(app) {
     app.post('/api/groups/:id/members', async (req, res) => {
         try {
@@ -158,6 +187,12 @@ function addUserToGroup(app) {
     });
 }
 
+// Remove a user from a group
+// DELETE /api/groups/:id/members/:username
+// Returns: success message or error
+// Removes user from both members and admins arrays (case-insensitive)
+// Updates user's groups array to remove group ID
+// Does not check if user was actually a member
 function removeUserFromGroup(app) {
     app.delete('/api/groups/:id/members/:username', async (req, res) => {
         try {
@@ -189,6 +224,14 @@ function removeUserFromGroup(app) {
     });
 }
 
+// Promote a user to group admin
+// POST /api/groups/:id/admins
+// Body: { username: string }
+// Returns: success message or error
+// Adds "Group Admin" role to user's global roles if not present
+// Adds user to group's admins array
+// User must be a group member first
+// Prevents duplicate admin status
 function promoteToGroupAdmin(app) {
     app.post('/api/groups/:id/admins', async (req, res) => {
         try {
@@ -199,7 +242,7 @@ function promoteToGroupAdmin(app) {
             
             const db = getDB();
             
-            // 1. First, update the user's global roles to include "Group Admin"
+            // Update the user's global roles to include "Group Admin"
             const user = await db.collection('users').findOne({ 
                 username: { $regex: new RegExp(`^${username}$`, 'i') } 
             });
@@ -214,7 +257,7 @@ function promoteToGroupAdmin(app) {
                 );
             }
             
-            // 2. Then, add user to this specific group's admin list
+            // Add user to this specific group's admin list
             const group = await db.collection('groups').findOne({ _id: new ObjectId(id) });
             if (!group) return res.status(404).json({ error: 'Group not found' });
             
@@ -239,6 +282,11 @@ function promoteToGroupAdmin(app) {
     });
 }
 
+// Demote a user from group admin
+// DELETE /api/groups/:id/admins/:username
+// Returns: success message or error
+// Removes user from group's admins array (case-insensitive)
+// Prevents removing group owner as admin
 function demoteFromGroupAdmin(app) {
     app.delete('/api/groups/:id/admins/:username', async (req, res) => {
         try {

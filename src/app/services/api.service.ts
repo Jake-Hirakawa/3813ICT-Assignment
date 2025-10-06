@@ -109,6 +109,7 @@ export class ApiService {
     return this.http.post<{ imageUrl: string }>(`${this.base}/upload/message-image`, formData);
   }
 
+  // Upload an avatar image
   uploadAvatar(userId: string, file: File) {
   const formData = new FormData();
   formData.append('avatar', file);

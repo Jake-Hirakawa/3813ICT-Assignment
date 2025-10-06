@@ -1,6 +1,14 @@
 import { getDB } from '../db.js';
 import { ObjectId } from 'mongodb';
 
+// Upload user avatar image
+// POST /api/users/:id/avatar
+// Requires: multipart/form-data with 'avatar' field
+// Returns: { avatarUrl: string } or error
+// Validates user exists before upload
+// Saves image to /images directory
+// Updates user's avatarUrl field in database
+// Returns path to uploaded image for client use
 function uploadAvatar(app, upload) {
     app.post('/api/users/:id/avatar', upload.single('avatar'), async (req, res) => {
         try {
@@ -27,6 +35,13 @@ function uploadAvatar(app, upload) {
     });
 }
 
+// Upload message image
+// POST /api/upload/message-image
+// Requires: multipart/form-data with 'image' field
+// Returns: { imageUrl: string } or error
+// Does not associate with specific message (handled by client)
+// Saves image to /images directory
+// Returns path to uploaded image for embedding in messages
 function uploadMessageImage(app, upload) {
     app.post('/api/upload/message-image', upload.single('image'), (req, res) => {
         try {

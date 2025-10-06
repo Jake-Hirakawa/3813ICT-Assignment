@@ -1,6 +1,17 @@
 import { getDB } from './db.js';
 
+// Main socket event handler function
+// Sets up listeners for chat-related events
+// io: Socket.IO server instance for broadcasting
+// socket: Individual client socket connection
 function onMessage(io, socket) {
+    // Handle user joining a channel
+    // Event: 'join-channel'
+    // Data: { channelId: string, username: string }
+    // Adds socket to room (channelId) for targeted broadcasts
+    // Stores username and channelId on socket for later use
+    // Notifies other users in channel that user joined
+    // Emits system message to all users except sender
     socket.on('join-channel', (data) => {
         const { channelId, username } = data;
         
@@ -17,6 +28,13 @@ function onMessage(io, socket) {
         console.log(`${username} joined channel: ${channelId}`);
     });
 
+    // Handle sending chat messages
+    // Event: 'send-message'
+    // Data: message object with channelId, username, text, etc.
+    // Generates unique message ID with timestamp
+    // Saves message to MongoDB messages collection
+    // Broadcasts message to all users in the channel (including sender)
+    // Error handling logs failures without crashing
     socket.on('send-message', async (message) => {
         try {
             const db = getDB();
@@ -36,6 +54,12 @@ function onMessage(io, socket) {
         }
     });
 
+    // Handle user disconnection
+    // Event: 'disconnect'
+    // Automatic Socket.IO event when client disconnects
+    // Notifies channel users that user left (if user was in a channel)
+    // Emits system message to remaining users
+    // Logs disconnection with socket ID
     socket.on('disconnect', () => {
         if (socket.username && socket.channelId) {
             socket.to(socket.channelId).emit('user-left', {

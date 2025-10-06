@@ -2,6 +2,11 @@ import { getDB } from '../db.js';
 import { ObjectId } from 'mongodb';
 import { transformDoc, transformDocs } from '../utils/dbHelpers.js';
 
+// Get all users
+// GET /api/users
+// Returns: { users: [] } array of all users without passwords or error
+// Excludes password field from results for security
+// Transforms MongoDB _id to id field for client compatibility
 function getUsers(app) {
     app.get('/api/users', async (req, res) => {
         try {
@@ -15,6 +20,14 @@ function getUsers(app) {
     });
 }
 
+// Create a new user
+// POST /api/users
+// Body: { username: string, email: string, password: string, role: string (optional, default: 'User') }
+// Returns: { user } without password or error
+// Validates username is unique (case-insensitive)
+// Sets default role to 'User' if not specified
+// Initializes empty groups array
+// Adds timestamp for user creation
 function addUser(app) {
     app.post('/api/users', async (req, res) => {
         try {
@@ -49,6 +62,14 @@ function addUser(app) {
     });
 }
 
+// Delete a user
+// DELETE /api/users/:id
+// Returns: success message or error
+// Removes user from all groups' members and admins arrays (case-insensitive)
+// Removes user from all channel members arrays
+// Deletes all join requests by this user
+// Completely removes user from database
+// Cascading delete ensures no orphaned references
 function deleteUser(app) {
     app.delete('/api/users/:id', async (req, res) => {
         try {
@@ -91,6 +112,13 @@ function deleteUser(app) {
     });
 }
 
+// User login authentication
+// POST /api/auth/login
+// Body: { username: string, password: string }
+// Returns: { user } object without password or 401 error
+// Case-insensitive username matching
+// Validates credentials against database
+// Returns user data for session storage
 function loginUser(app) {
     app.post('/api/auth/login', async (req, res) => {
         try {
@@ -114,6 +142,13 @@ function loginUser(app) {
     });
 }
 
+// Promote user to Super Admin
+// POST /api/users/:id/promote-super-admin
+// Returns: success message or error
+// Adds 'Super Admin' to user's roles array
+// Prevents duplicate Super Admin role
+// Uses $addToSet to avoid duplicates
+// Does not remove existing roles
 function promoteToSuperAdmin(app) {
     app.post('/api/users/:id/promote-super-admin', async (req, res) => {
         try {

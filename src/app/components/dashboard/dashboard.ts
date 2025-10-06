@@ -38,6 +38,9 @@ export class DashboardComponent implements OnInit {
     private router: Router
   ) {}
 
+  // Component initialization
+  // Validates user authentication, redirects to login if not authenticated
+  // Loads all users, groups, and join requests
   ngOnInit() {
     this.currentUser = this.authService.getCurrentUser();
     if (!this.currentUser) {
@@ -49,7 +52,9 @@ export class DashboardComponent implements OnInit {
     this.loadJoinRequests();
   }
 
-  // Data loading
+  // Load all users from API
+  // Updates users array with response
+  // Shows error message on failure
   loadUsers() {
     this.apiService.getUsers().subscribe({
       next: (response) => {
@@ -61,6 +66,9 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  // Load all groups from API
+  // Updates groups array with response
+  // Shows error message on failure
   loadGroups() {
     this.apiService.getGroups().subscribe({
       next: (response) => {
@@ -72,6 +80,9 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  // Load all join requests from API
+  // Updates joinRequests array with response
+  // Handles missing endpoint gracefully (logs but doesn't show error)
   loadJoinRequests() {
     this.apiService.getJoinRequests().subscribe({
       next: (response) => {
@@ -84,15 +95,21 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-  // Permission checks
+  // Check if current user is Super Admin
+  // Returns true if user has 'Super Admin' role
   isSuperAdmin(): boolean {
     return this.currentUser?.roles?.includes('Super Admin') || false;
   }
 
+  // Check if current user is Group Admin
+  // Returns true if user has 'Group Admin' role
   isGroupAdmin(): boolean {
     return this.currentUser?.roles?.includes('Group Admin') || false;
   }
 
+  // Check if user can administer specific group
+  // Super Admins can administer all groups
+  // Group Admins can only administer groups they own or are admins of
   canAdminGroup(group: Group): boolean {
     if (this.isSuperAdmin()) return true;
     if (this.isGroupAdmin()) {
@@ -102,17 +119,26 @@ export class DashboardComponent implements OnInit {
     return false;
   }
 
+  // Get display name for current user's role
+  // Returns highest privilege role: Super Admin > Group Admin > User
   getCurrentUserRole(): string {
     if (this.isSuperAdmin()) return 'Super Admin';
     if (this.isGroupAdmin()) return 'Group Admin';
     return 'User';
   }
 
+  // Trigger hidden file input for avatar upload
+  // Programmatically clicks file input element
   triggerMyAvatarInput(): void {
     const input = document.getElementById('myAvatarInput') as HTMLInputElement;
     if (input) input.click();
   }
 
+  // Handle avatar file selection and upload
+  // Validates file is an image
+  // Uploads avatar via API for current user
+  // Updates user's avatarUrl in localStorage
+  // Shows success/error message
   onMyAvatarSelected(event: any): void {
     const file = event.target.files[0];
     if (file && file.type.startsWith('image/')) {
@@ -137,20 +163,26 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-  // User membership checks
+  // Check if current user is member of a group
+  // Case-insensitive username comparison
   isUserInGroup(group: Group): boolean {
     return group.members?.some(member => 
       member.toLowerCase() === this.currentUser?.username.toLowerCase()
     ) || false;
   }
 
+  // Check if current user is member of a channel
+  // Case-insensitive username comparison
   isUserInChannel(group: Group, channel: Channel): boolean {
     return channel.members?.some(member =>
       member.toLowerCase() === this.currentUser?.username.toLowerCase()
     ) || false;
   }
 
-  // Base User Actions - Group Management
+  // Request to join a group (creates pending join request)
+  // Regular users use this to request group membership
+  // Creates join request for group admin approval
+  // Reloads join requests after submission
   requestJoinGroup(group: Group) {
     if (!this.currentUser) return;
     
@@ -165,6 +197,9 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  // Join group directly (bypasses join request)
+  // Used by admins or in special circumstances
+  // Adds user to group immediately
   joinGroupDirectly(group: Group) {
     if (!this.currentUser) return;
     
@@ -179,6 +214,9 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  // Leave a group
+  // Removes current user from group membership
+  // Shows confirmation dialog before leaving
   leaveGroup(group: Group) {
     if (!this.currentUser) return;
     
@@ -195,7 +233,9 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-  // Base User Actions - Channel Management
+  // Join a channel
+  // Adds current user to channel membership
+  // User must be group member first (validated server-side)
   joinChannel(group: Group, channel: Channel) {
     if (!this.currentUser) return;
     
@@ -210,6 +250,9 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  // Leave a channel
+  // Removes current user from channel membership
+  // Shows confirmation dialog before leaving
   leaveChannel(group: Group, channel: Channel) {
     if (!this.currentUser) return;
     
@@ -226,11 +269,17 @@ export class DashboardComponent implements OnInit {
     }
   }
 
+
+  // Navigate to chat interface
+  // Routes to chat component with groupId and channelId parameters
   navigateToChat(group: Group, channel: Channel) {
     this.router.navigate(['/chat', group.id, channel.id]);
   }
 
-  // User management
+  // Create new user (Super Admin only)
+  // Validates username and email are provided
+  // Includes role selection (User, Group Admin)
+  // Clears form after successful creation
   createUser() {
     if (!this.newUser.username.trim() || !this.newUser.email.trim()) {
       this.showMessage('Username and email are required', 'error');
@@ -256,6 +305,10 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  // Delete user (Super Admin only)
+  // Shows confirmation dialog
+  // Removes user from all groups and channels
+  // Reloads users and groups after deletion
   deleteUser(user: any) {
     if (confirm(`Are you sure you want to delete user ${user.username}?`)) {
       this.apiService.deleteUser(user.id).subscribe({
@@ -271,6 +324,9 @@ export class DashboardComponent implements OnInit {
     }
   }
 
+  // Delete own account (any user)
+  // Shows confirmation with warning about permanence
+  // Logs out and redirects to login after deletion
   deleteOwnAccount() {
     if (!this.currentUser) return;
     
@@ -288,7 +344,10 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-  // Group management
+  // Create new group (Group Admin or Super Admin)
+  // Validates group name is provided
+  // Sets current user as owner
+  // Clears form after creation
   createGroup() {
     if (!this.newGroup.name.trim()) {
       this.showMessage('Group name is required', 'error');
@@ -312,6 +371,10 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  // Delete group (group owner or Super Admin)
+  // Shows confirmation dialog
+  // Removes group and all related data
+  // Reloads groups after deletion
   deleteGroup(group: Group) {
     if (confirm(`Are you sure you want to delete group ${group.name}?`)) {
       this.apiService.deleteGroup(group.id).subscribe({
@@ -326,6 +389,9 @@ export class DashboardComponent implements OnInit {
     }
   }
 
+  // Add user to group (group admin function)
+  // Adds selected user to group membership
+  // Clears dropdown selection after addition
   addUserToGroup(group: Group, username: string) {
     if (!username) return;
 
@@ -341,6 +407,10 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  // Remove user from group (group admin function)
+  // Shows confirmation dialog
+  // Removes user from group membership and admin list
+  // Reloads groups after removal
   removeUserFromGroup(group: Group, username: string) {
     if (confirm(`Remove ${username} from ${group.name}?`)) {
       this.apiService.removeUserFromGroup(group.id, username).subscribe({
@@ -355,7 +425,11 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-  // Promote user to group admin for this specific group
+  // Promote user to group admin for specific group
+  // Validates current user can administer the group
+  // Adds 'Group Admin' role to user if not present
+  // Adds user to group's admins array
+  // Shows confirmation dialog
   promoteToGroupAdmin(group: Group, username: string) {
     if (!this.canAdminGroup(group)) {
       this.showMessage('You can only promote users in groups you created', 'error');
@@ -375,7 +449,11 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-  // Demote user from group admin for this specific group  
+  // Demote user from group admin for specific group
+  // Validates current user can administer the group
+  // Removes user from group's admins array
+  // Does not remove global 'Group Admin' role
+  // Shows confirmation dialog
   demoteFromGroupAdmin(group: Group, username: string) {
     if (!this.canAdminGroup(group)) {
       this.showMessage('You can only demote users in groups you created', 'error');
@@ -395,7 +473,8 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-  // Check if user is admin of this specific group
+  // Check if user is admin of specific group
+  // Case-insensitive check against group's admins array
   isUserAdminOfGroup(group: Group, username: string): boolean {
     return group.admins?.some(admin => 
       admin.toLowerCase() === username.toLowerCase()
@@ -403,7 +482,10 @@ export class DashboardComponent implements OnInit {
   }
 
 
-  // Channel management
+  // Add channel to group (group admin function)
+  // Validates channel name is provided
+  // Creates channel with empty members array
+  // Clears input after creation
   addChannelToGroup(group: Group, channelName: string) {
     if (!channelName?.trim()) return;
 
@@ -419,6 +501,10 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  // Remove channel from group (group admin function)
+  // Shows confirmation dialog
+  // Deletes channel and all associated messages
+  // Reloads groups after deletion
   removeChannelFromGroup(group: Group, channel: Channel) {
     if (confirm(`Delete channel #${channel.name}?`)) {
       this.apiService.removeChannelFromGroup(group.id, channel.id).subscribe({
@@ -433,7 +519,8 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-  // Join Request Management
+  // Check if user has pending join request for group
+  // Returns true if pending request exists for current user
   isUserPendingForGroup(group: Group): boolean {
     return this.joinRequests.some(
       req =>
@@ -443,12 +530,19 @@ export class DashboardComponent implements OnInit {
     );
   }
 
+  // Get all pending join requests for a group
+  // Filters requests by groupId and 'pending' status
+  // Used to display pending requests to group admins
   getPendingRequestsForGroup(group: Group): JoinRequest[] {
     return this.joinRequests.filter(req => 
       req.gid === group.id && req.status === 'pending'
     );
   }
 
+  // Approve join request
+  // Adds user to group membership
+  // Updates request status to 'approved'
+  // Reloads join requests and groups
   approveJoinRequest(request: JoinRequest) {
     this.apiService.approveJoinRequest(request.id).subscribe({
       next: () => {
@@ -462,6 +556,10 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  // Reject join request
+  // Updates request status to 'rejected'
+  // Does not add user to group
+  // Reloads join requests
   rejectJoinRequest(request: JoinRequest) {
     this.apiService.rejectJoinRequest(request.id).subscribe({
       next: () => {
@@ -474,7 +572,11 @@ export class DashboardComponent implements OnInit {
     });
   }
 
-    // Promote user to Super Admin (only functionality needed)
+  // Promote user to Super Admin (Super Admin only)
+  // Validates current user is Super Admin
+  // Checks user doesn't already have Super Admin role
+  // Shows confirmation with warning about full system access
+  // Adds 'Super Admin' to user's roles
   promoteToSuperAdmin(user: any) {
     if (!this.isSuperAdmin()) {
       this.showMessage('Only Super Admins can promote users', 'error');
@@ -499,12 +601,16 @@ export class DashboardComponent implements OnInit {
     }
   }
 
-  // Helper method to check if promotion is available
+  // Get users not in group
+  // Filters users array to exclude current group members
+  // Used for "Add User" dropdown
   canPromoteToSuperAdmin(user: any): boolean {
     return this.isSuperAdmin() && !user.roles?.includes('Super Admin');
   }
 
-  // Helper methods for dropdowns
+  // Get users not in group
+  // Filters users array to exclude current group members
+  // Used for "Add User" dropdown
   getAvailableUsersForGroup(group: Group): any[] {
     return this.users.filter(user => 
       !group.members?.some(member => 
@@ -513,6 +619,9 @@ export class DashboardComponent implements OnInit {
     );
   }
 
+  // Get group members not in channel
+  // Filters group members to exclude current channel members
+  // Used for "Add to Channel" dropdown
   getAvailableUsersForChannel(group: Group, channel: Channel): string[] {
     return group.members?.filter(member => 
       !channel.members?.some(channelMember => 
@@ -521,7 +630,9 @@ export class DashboardComponent implements OnInit {
     ) || [];
   }
 
-  // Utility methods
+  // Show temporary notification message
+  // Displays message with success/error styling
+  // Auto-hides after 5 seconds
   showMessage(text: string, type: 'success' | 'error') {
     this.message = text;
     this.messageType = type;
@@ -530,6 +641,8 @@ export class DashboardComponent implements OnInit {
     }, 5000);
   }
 
+  // Logout current user
+  // Clears authentication and redirects to login
   logout() {
     this.authService.logout();
     this.router.navigate(['/login']);
